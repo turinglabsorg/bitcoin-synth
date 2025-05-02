@@ -212,18 +212,36 @@ async function playTransaction(index) {
         function playMelodyNotes() {
             let melodyNotes = 8 + Math.floor(Math.random() * 8); // 8-16 notes
             let melodyBase = 60 + Math.floor(Math.random() * 12); // C4-B4
+            // Define major and minor scale intervals
+            const majorScale = [0, 2, 4, 5, 7, 9, 11];
+            const minorScale = [0, 2, 3, 5, 7, 8, 10];
+            // Chord intervals for harmonization
+            const majorChord = [0, 4, 7]; // root, major third, fifth
+            const minorChord = [0, 3, 7]; // root, minor third, fifth
+            // Get root midi from key
+            const rootMidi = keyToMidi[key] || 60;
             for (let m = 0; m < melodyNotes; m++) {
-                let melodyDelay = m * (300 + Math.floor(Math.random() * (mood > 0.5 ? 350 : 600))); // 300-650ms when happy, 300-900ms otherwise
-                let melodyNote = melodyBase + Math.floor(Math.random() * 14);
+                let melodyDelay = m * (300 + Math.floor(Math.random() * (mood > 0.5 ? 350 : 600)));
+                // Pick a scale degree
+                let scaleIdx = Math.floor(Math.random() * 7);
+                let scale = mood > 0.5 ? majorScale : minorScale;
+                let melodyNote = rootMidi + scale[scaleIdx] + 12 * Math.floor(Math.random() * 2); // 1-2 octaves
                 // Add more leaps and syncopation for happy mood
                 if (mood > 0.5 && Math.random() < 0.6) {
-                    melodyNote += (Math.random() < 0.5 ? 12 : 7) * (Math.random() < 0.5 ? 1 : -1); // octave or fifth jumps
+                    // Jump to another major scale degree
+                    let leapIdx = (scaleIdx + (Math.random() < 0.5 ? 2 : 4)) % 7;
+                    melodyNote = rootMidi + scale[leapIdx] + 12 * Math.floor(Math.random() * 2);
+                } else if (mood <= 0.5 && Math.random() < 0.6) {
+                    // Jump to another minor scale degree
+                    let leapIdx = (scaleIdx + (Math.random() < 0.5 ? 2 : 5)) % 7;
+                    melodyNote = rootMidi + scale[leapIdx] + 12 * Math.floor(Math.random() * 2);
                 }
                 // Occasionally add a quick flourish (double or triple note)
                 if (mood > 0.5 && Math.random() < 0.25) {
                     for (let f = 0; f < 2 + Math.floor(Math.random() * 2); f++) {
                         setTimeout(() => {
-                            let flourishNote = melodyNote + (Math.random() < 0.5 ? 2 : -2);
+                            let flourishIdx = (scaleIdx + (Math.random() < 0.5 ? 1 : -1)) % 7;
+                            let flourishNote = rootMidi + scale[(flourishIdx + 7) % 7] + 12 * Math.floor(Math.random() * 2);
                             let melAmp = 1.3 * (0.7 + Math.random() * 0.6);
                             synth.playNote(flourishNote, melAmp, 0.8, 0);
                         }, melodyDelay + 30 * f);
@@ -243,17 +261,18 @@ async function playTransaction(index) {
                     synth.setDelayTimeTempo(140, 0.35); // Longer delay time
                     synth.setAmpAttackTime(0.05);
                     synth.setAmpReleaseTime(0.2);
-                    let melAmp = 1.3 * (0.7 + Math.random() * 0.6); // More amplitude variation
+                    let melAmp = 0.8 * (0.7 + Math.random() * 0.6); // Lowered amplitude for melody
                     synth.playNote(melodyNote, melAmp, 0.8, 0);
                     // --- Harmonization ---
                     const harmonies = [];
-                    if (Math.random() < 0.8) harmonies.push(3); // third
-                    if (Math.random() < 0.5) harmonies.push(7); // fifth
+                    let chord = mood > 0.5 ? majorChord : minorChord;
+                    if (Math.random() < 0.8) harmonies.push(chord[1]); // third
+                    if (Math.random() < 0.5) harmonies.push(chord[2]); // fifth
                     if (Math.random() < 0.2) harmonies.push(12); // octave
                     harmonies.forEach((interval, i) => {
                         setTimeout(() => {
-                            let harmonyNote = melodyNote + interval * (Math.random() < 0.5 ? 1 : -1);
-                            let harmonyAmp = melAmp * (0.5 + Math.random() * 0.3); // softer
+                            let harmonyNote = melodyNote + interval;
+                            let harmonyAmp = melAmp * (0.35 + Math.random() * 0.2); // Lowered amplitude for harmonies
                             synth.playNote(harmonyNote, harmonyAmp, 0.8, 0);
                         }, 10 + i * 20);
                     });
