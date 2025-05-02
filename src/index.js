@@ -245,6 +245,18 @@ async function playTransaction(index) {
                     synth.setAmpReleaseTime(0.2);
                     let melAmp = 1.3 * (0.7 + Math.random() * 0.6); // More amplitude variation
                     synth.playNote(melodyNote, melAmp, 0.8, 0);
+                    // --- Harmonization ---
+                    const harmonies = [];
+                    if (Math.random() < 0.8) harmonies.push(3); // third
+                    if (Math.random() < 0.5) harmonies.push(7); // fifth
+                    if (Math.random() < 0.2) harmonies.push(12); // octave
+                    harmonies.forEach((interval, i) => {
+                        setTimeout(() => {
+                            let harmonyNote = melodyNote + interval * (Math.random() < 0.5 ? 1 : -1);
+                            let harmonyAmp = melAmp * (0.5 + Math.random() * 0.3); // softer
+                            synth.playNote(harmonyNote, harmonyAmp, 0.8, 0);
+                        }, 10 + i * 20);
+                    });
                     // Restore config
                     synth.setOscWave(prevWave === 'sine' ? 0 : prevWave === 'square' ? 1 : prevWave === 'sawtooth' ? 2 : 3);
                     synth.setAmpAttackTime(prevAttack / 5);
