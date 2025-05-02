@@ -13,6 +13,12 @@ This project turns blockchain data into groovy tunes that'll make your ears danc
 - 🎵 Create your own blockchain symphony
 - 🎧 Listen to the sweet sound of decentralization
 
+## Demo
+
+Check out the live demo at [https://turinglabsorg.github.io/bitcoin-synth/](https://turinglabsorg.github.io/bitcoin-synth/)
+
+> 💡 Pro tip: Press SPACE to change transactions and hear different blockchain sounds!
+
 ## Installation
 
 ```bash
