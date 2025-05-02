@@ -135,9 +135,7 @@
       .btcamp-raw {
         background: #111;
         color: #00ffea;
-        font-size: 0.95rem;
-        padding: 1.2rem 2rem;
-        flex: 1 1 auto;
+        font-size: 0.65rem;
         overflow-y: auto;
         word-break: break-all;
         border-bottom: 2px solid #222;
@@ -396,10 +394,10 @@
         </div>
       </div>
       <div class="btcamp-info">
-        <span id="info-label">Transaction:</span>
+        <span id="info-label">Playing transaction:</span>
         <span id="info-value"></span>
       </div>
-      <div class="btcamp-raw" id="rawtx"></div>
+      <div class="btcamp-raw" id="rawtx">Still need to be fetched, press play..</div>
       <div class="btcamp-nowplaying" id="nowplaying"></div>
       <div class="btcamp-footer">
         <span
@@ -418,5 +416,10 @@
       </div>
     </div>
     <script src="main.js"></script>
+    <script>
+      document.addEventListener('contextmenu', function(e) {
+        e.preventDefault();
+      });
+    </script>
   </body>
 </html>
