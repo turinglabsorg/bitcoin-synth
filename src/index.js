@@ -213,8 +213,22 @@ async function playTransaction(index) {
             let melodyNotes = 8 + Math.floor(Math.random() * 8); // 8-16 notes
             let melodyBase = 60 + Math.floor(Math.random() * 12); // C4-B4
             for (let m = 0; m < melodyNotes; m++) {
-                let melodyDelay = m * (600 + Math.floor(Math.random() * 600)); // 600-1200ms between notes
-                let melodyNote = melodyBase + Math.floor(Math.random() * 12); // Random note in an octave
+                let melodyDelay = m * (300 + Math.floor(Math.random() * (mood > 0.5 ? 350 : 600))); // 300-650ms when happy, 300-900ms otherwise
+                let melodyNote = melodyBase + Math.floor(Math.random() * 14);
+                // Add more leaps and syncopation for happy mood
+                if (mood > 0.5 && Math.random() < 0.6) {
+                    melodyNote += (Math.random() < 0.5 ? 12 : 7) * (Math.random() < 0.5 ? 1 : -1); // octave or fifth jumps
+                }
+                // Occasionally add a quick flourish (double or triple note)
+                if (mood > 0.5 && Math.random() < 0.25) {
+                    for (let f = 0; f < 2 + Math.floor(Math.random() * 2); f++) {
+                        setTimeout(() => {
+                            let flourishNote = melodyNote + (Math.random() < 0.5 ? 2 : -2);
+                            let melAmp = 1.3 * (0.7 + Math.random() * 0.6);
+                            synth.playNote(flourishNote, melAmp, 0.8, 0);
+                        }, melodyDelay + 30 * f);
+                    }
+                }
                 timeout.push(setTimeout(() => {
                     // Save/restore synth config
                     let prevWave = synth.wave;
@@ -224,12 +238,13 @@ async function playTransaction(index) {
                     let prevDelayTime = synth._leftDelay.delayTime.value;
                     let prevDelayTimeTempo = synth._rightDelay.delayTime.value;
                     // Set melody params
-                    synth.setOscWave(0); // Sine wave for defined melody
-                    synth.setDelayFeedback(0.5);
-                    synth.setDelayTimeTempo(110, 0.25);
-                    synth.setAmpAttackTime(0.05); // Percussive
-                    synth.setAmpReleaseTime(0.2); // Percussive
-                    synth.playNote(melodyNote, 1.0, 0.7, 0); // Melody amplitude set to 1.0
+                    synth.setOscWave(0); // Sine for melody
+                    synth.setDelayFeedback(0.7); // More delay
+                    synth.setDelayTimeTempo(140, 0.35); // Longer delay time
+                    synth.setAmpAttackTime(0.05);
+                    synth.setAmpReleaseTime(0.2);
+                    let melAmp = 1.3 * (0.7 + Math.random() * 0.6); // More amplitude variation
+                    synth.playNote(melodyNote, melAmp, 0.8, 0);
                     // Restore config
                     synth.setOscWave(prevWave === 'sine' ? 0 : prevWave === 'square' ? 1 : prevWave === 'sawtooth' ? 2 : 3);
                     synth.setAmpAttackTime(prevAttack / 5);
@@ -287,27 +302,38 @@ async function playTransaction(index) {
             // Waveform and filter: happier = triangle, sadder = sine
             if (mood > 0.5) {
                 synth.setOscWave(3); // Triangle (softer than saw)
-                synth.setFilterCutoff(0.65); // Lower cutoff for less harshness
+                synth.setFilterCutoff(0.32); // Lower cutoff for less harshness (was 0.48)
             } else {
                 synth.setOscWave(0); // Sine (dark)
-                synth.setFilterCutoff(0.4);
+                synth.setFilterCutoff(0.28); // Lowered for ambience
             }
             // Update progress bar
             setProgressBar(Math.min(100, Math.round((i / toplay.length) * 100)));
-            playSound(midiNote, byteHex, 0, amplitude * 0.5, filterOffset);
+            // Add more dynamic amplitude for happy mood
+            let dynamicAmp = amplitude * 0.25; // Lowered ambience volume
+            if (mood > 0.5) {
+                dynamicAmp *= 0.9 + Math.random() * 0.3; // 0.9x to 1.2x
+            }
+            playSound(midiNote, byteHex, 0, dynamicAmp, filterOffset);
             // --- Extra dynamic: quick grace note (octave up or down) ---
-            if (mood > 0.5 && Math.random() < 0.2) {
+            if (mood > 0.5 && Math.random() < 0.35) { // more grace notes
                 var graceNote = midiNote + (Math.random() < 0.5 ? 12 : -12);
                 if (graceNote >= 48 && graceNote <= 84) {
                     setTimeout(() => {
-                        playSound(graceNote, byteHex, 0, amplitude * 0.7, filterOffset);
-                    }, 60 + Math.random() * 60); // quick after main note
+                        playSound(graceNote, byteHex, 0, dynamicAmp * 1.1, filterOffset);
+                    }, 40 + Math.random() * 80); // quicker after main note
                 }
             }
-            // --- More rhythmic variation when happy ---
+            // --- More rhythmic and melodic variation when happy ---
             var nextDelay = delay;
             if (mood > 0.5) {
-                nextDelay = delay * (0.7 + Math.random() * 0.7); // 70%-140% of delay
+                // More rhythmic swing and random jumps
+                nextDelay = delay * (0.5 + Math.random() * 1.2); // 50%-170% of delay
+                // Occasionally jump by a 5th or 7th
+                if (Math.random() < 0.18) {
+                    prevNote += (Math.random() < 0.5 ? 7 : 5) * (Math.random() < 0.5 ? 1 : -1);
+                    prevNote = Math.max(48, Math.min(76, prevNote));
+                }
             }
             timeout.push(setTimeout(function () {
                 playNoteAt(i + 2);
