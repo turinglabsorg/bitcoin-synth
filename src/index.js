@@ -12,6 +12,10 @@ var isplaying = false
 var timeout = []
 var playingindex = 0
 var nextblock = ''
+let tempo = 1.0;
+let mood = 0.0;
+let key = 'C';
+const keyToMidi = { C: 60, D: 62, E: 64, F: 65, G: 67, A: 69, B: 71 };
 
 function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
@@ -83,6 +87,46 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         };
     }
+    // Tempo slider setup
+    const tempoSlider = document.getElementById('tempo-slider');
+    const tempoValue = document.getElementById('tempo-value');
+    if (tempoSlider && tempoValue) {
+        tempoSlider.oninput = function () {
+            tempo = parseFloat(this.value);
+            tempoValue.textContent = tempo.toFixed(2) + 'x';
+        };
+    }
+    // Mood slider setup
+    const moodSlider = document.getElementById('mood-slider');
+    const moodValue = document.getElementById('mood-value');
+    if (moodSlider && moodValue) {
+        moodSlider.oninput = function () {
+            mood = parseFloat(this.value);
+            if (mood <= 0.05) {
+                moodValue.textContent = 'Sad';
+            } else if (mood >= 0.95) {
+                moodValue.textContent = 'Happy';
+            } else {
+                moodValue.textContent = mood.toFixed(2);
+            }
+        };
+    }
+    // Key slider setup
+    const keySlider = document.getElementById('key-slider');
+    const keyValue = document.getElementById('key-value');
+    const keys = ['C', 'D', 'E', 'F', 'G', 'A', 'B'];
+    if (keySlider && keyValue) {
+        keySlider.oninput = function () {
+            const idx = parseInt(this.value);
+            key = keys[idx];
+            keyValue.textContent = key;
+        };
+        // Initialize value
+        keyValue.textContent = keys[parseInt(keySlider.value)];
+        key = keys[parseInt(keySlider.value)];
+    }
+    // Fetch and display BTC price and set mood on load
+    updateMoodFromPrice();
 });
 
 function updateNextButtonVisibility() {
@@ -136,13 +180,18 @@ async function playTransaction(index) {
         await context.resume();
     }
     setIndicator('playing');
-    hideProgressBar(); // Hide and reset before starting
+    // Do not hide progress bar at the start of playback
     setProgressBar(0);
     if (txns[parseInt(index)] !== undefined) {
         var tx = await axios.get(`https://mempool.space/api/tx/${txns[parseInt(index)]}/hex`)
         var toplay = tx.data
         playingindex = index
-        document.getElementById("txplaying").innerHTML = 'Playing TXID<br><a target="_blank" href="https://mempool.space/tx/' + txns[parseInt(index)] + '/">' + txns[parseInt(index)].substring(0, 25) + '...</a>';
+        // Fetch block reference if available
+        let blockRef = '';
+        if (typeof nextblock !== 'undefined' && nextblock) {
+            blockRef = `<br><span style='font-size:0.9em;color:#00ffea;'>Block: <a target="_blank" href="https://mempool.space/block/${nextblock}">${nextblock.substring(0, 26)}...</a></span>`;
+        }
+        document.getElementById("txplaying").innerHTML = 'Playing TXID<br><a target="_blank" href="https://mempool.space/tx/' + txns[parseInt(index)] + '/">' + txns[parseInt(index)].substring(0, 25) + '...</a>' + blockRef;
         document.getElementById("rawtx").innerHTML = toplay;
         updateVisibility();
 
@@ -208,23 +257,59 @@ async function playTransaction(index) {
             }
             var byteHex = toplay.substr(i, 2)
             var byteVal = parseInt(byteHex, 16)
-            var delay = 100 + (byteVal % 100); // Vary time between 100-200ms
-            var noteOffset = (byteVal % 24) - 12; // Range of two octaves, centered
-            var midiNote = Math.max(36, Math.min(96, prevNote + noteOffset));
+            var delay = (100 + (byteVal % 100)) * (1 / tempo); // Vary time, adjust by tempo
+            // --- Mood-based note selection ---
+            // Major scale intervals (C major): [0, 2, 4, 5, 7, 9, 11]
+            var majorScale = [0, 2, 4, 5, 7, 9, 11];
+            var noteOffset;
+            var midiNote;
+            var rootMidi = keyToMidi[key] || 60;
+            if (mood > 0.5) {
+                // Happier: snap to major scale, bias to upper-middle range, clamp max
+                var scaleDegree = majorScale[Math.floor((byteVal % majorScale.length))];
+                var base = rootMidi + Math.floor(mood * 12);
+                midiNote = base + scaleDegree;
+                // Clamp to 48-76 (E5)
+                midiNote = Math.max(48, Math.min(76, midiNote));
+                // Allow bigger jumps (up to 12 semitones)
+                if (Math.abs(midiNote - prevNote) > 12) {
+                    midiNote = prevNote + (midiNote > prevNote ? 12 : -12);
+                }
+            } else {
+                noteOffset = (byteVal % 24) - 12;
+                midiNote = Math.max(36, Math.min(72, prevNote + noteOffset));
+            }
             prevNote = midiNote; // Remember last note for smoother progression
             var amplitude = 0.1 + (byteVal % 64) / 256; // Range 0.1-0.35
             var filterOffset = 0.4 + (byteVal % 128) / 256; // Range 0.4-0.9
-            if (Math.random() < 0.5) {
-                synth.setOscWave(0); // Sine (rain-like)
+            // Waveform and filter: happier = triangle, sadder = sine
+            if (mood > 0.5) {
+                synth.setOscWave(3); // Triangle (softer than saw)
+                synth.setFilterCutoff(0.65); // Lower cutoff for less harshness
             } else {
-                synth.setOscWave(2); // Sawtooth (ambient)
+                synth.setOscWave(0); // Sine (dark)
+                synth.setFilterCutoff(0.4);
             }
             // Update progress bar
             setProgressBar(Math.min(100, Math.round((i / toplay.length) * 100)));
-            playSound(midiNote, byteHex, 0, amplitude, filterOffset);
+            playSound(midiNote, byteHex, 0, amplitude * 0.5, filterOffset);
+            // --- Extra dynamic: quick grace note (octave up or down) ---
+            if (mood > 0.5 && Math.random() < 0.2) {
+                var graceNote = midiNote + (Math.random() < 0.5 ? 12 : -12);
+                if (graceNote >= 48 && graceNote <= 84) {
+                    setTimeout(() => {
+                        playSound(graceNote, byteHex, 0, amplitude * 0.7, filterOffset);
+                    }, 60 + Math.random() * 60); // quick after main note
+                }
+            }
+            // --- More rhythmic variation when happy ---
+            var nextDelay = delay;
+            if (mood > 0.5) {
+                nextDelay = delay * (0.7 + Math.random() * 0.7); // 70%-140% of delay
+            }
             timeout.push(setTimeout(function () {
                 playNoteAt(i + 2);
-            }, delay));
+            }, nextDelay));
         }
         playNoteAt(0);
         playMelodyNotes();
@@ -246,7 +331,6 @@ function playNext() {
         clearTimeout(timeout[k])
     }
     timeout = [];
-    hideProgressBar();
     setProgressBar(0);
     if (txns[playnext] !== undefined) {
         playTransaction(playnext)
@@ -303,5 +387,45 @@ document.body.onkeyup = function (e) {
         }
         setIndicator('playing');
         playNext()
+    }
+}
+
+async function updateMoodFromPrice() {
+    try {
+        const res = await fetch('https://mempool.space/api/v1/prices');
+        const data = await res.json();
+        const price = data.USD;
+        // Map price to mood (0 to 1, max at 150000)
+        const moodValue = Math.min(1, Math.max(0, price / 150000));
+        const moodSlider = document.getElementById('mood-slider');
+        const moodLabel = document.getElementById('mood-value');
+        const priceDisplay = document.getElementById('btc-price-display');
+        if (moodSlider && moodLabel) {
+            moodSlider.value = moodValue;
+            mood = moodValue;
+            if (moodValue <= 0.05) {
+                moodLabel.textContent = 'Sad';
+            } else if (moodValue >= 0.95) {
+                moodLabel.textContent = 'Happy';
+            } else {
+                moodLabel.textContent = moodValue.toFixed(2);
+            }
+        }
+        if (priceDisplay) {
+            priceDisplay.textContent = `BTC/USD: $${price}`;
+        }
+    } catch (e) {
+        const moodSlider = document.getElementById('mood-slider');
+        const moodLabel = document.getElementById('mood-value');
+        const priceDisplay = document.getElementById('btc-price-display');
+        if (moodSlider && moodLabel) {
+            moodSlider.value = 0.5;
+            mood = 0.5;
+            moodLabel.textContent = '0.50';
+        }
+        if (priceDisplay) {
+            priceDisplay.textContent = 'BTC price unavailable';
+        }
+        console.error('Failed to fetch price:', e);
     }
 }
