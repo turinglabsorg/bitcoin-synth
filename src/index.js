@@ -193,7 +193,9 @@ async function playTransaction(index) {
         }
         document.getElementById("txplaying").innerHTML = 'Playing TXID<br><a target="_blank" href="https://mempool.space/tx/' + txns[parseInt(index)] + '/">' + txns[parseInt(index)].substring(0, 25) + '...</a>' + blockRef;
         document.getElementById("rawtx").innerHTML = toplay;
+        document.getElementsByClassName('btcamp-btn-row')[0].style.marginTop = '0rem';
         updateVisibility();
+        document.getElementsByClassName('btcamp-display')[0].style.display = 'flex';
 
         // Set up ambient synth parameters (default)
         synth.setDelayFeedback(0.6); // Increase delay feedback for more ambience

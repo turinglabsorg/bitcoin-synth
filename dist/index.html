@@ -12,33 +12,6 @@
       href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&display=swap"
       rel="stylesheet"
     />
-    <!-- OpenGraph Meta Tags -->
-    <meta property="og:title" content="Bitcoin Synth" />
-    <meta
-      property="og:description"
-      content="A crazy experiment turning Bitcoin transactions into synth music!"
-    />
-    <meta
-      property="og:image"
-      content="https://turinglabsorg.github.io/bitcoin-synth/banner.png"
-    />
-    <meta property="og:type" content="website" />
-    <meta
-      property="og:url"
-      content="https://turinglabsorg.github.io/bitcoin-synth/"
-    />
-
-    <!-- Twitter Card Meta Tags -->
-    <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="Bitcoin Synth" />
-    <meta
-      name="twitter:description"
-      content="A crazy experiment turning Bitcoin transactions into synth music!"
-    />
-    <meta
-      name="twitter:image"
-      content="https://turinglabsorg.github.io/bitcoin-synth/banner.png"
-    />
     <style>
       html,
       body {
@@ -95,8 +68,9 @@
         color: #00ff00;
         font-size: 1.1rem;
         padding: 0rem 2rem 0.7rem 2rem;
-        min-height: 30px;
-        display: block;
+        border-bottom: 2px solid #222;
+        height: 400px;
+        display: none;
         flex-direction: column;
         justify-content: center;
         width: 100%;
@@ -147,8 +121,7 @@
         background: #181c20;
         color: #00ff00;
         font-size: 1.1rem;
-        padding: 1.2rem 2rem 0 2rem;
-        border-top: 2px solid #222;
+        padding: 1.2rem 2rem;
         border-bottom: 2px solid #222;
         min-height: 38px;
         max-height: 38px;
@@ -208,6 +181,7 @@
         flex-direction: row;
         gap: 1.2em;
         justify-content: center;
+        margin-top: 2rem;
         width: 100%;
       }
       @media (max-width: 600px) {
@@ -268,8 +242,6 @@
         align-items: flex-end;
         justify-content: center;
         gap: 2.5em;
-        border: 2px solid #888;
-        margin-top: 2.5rem;
       }
       .synth-control {
         display: flex;
@@ -303,7 +275,7 @@
         height: 100px;
         width: 60px;
       }
-      .synth-knob[type="range"]::-webkit-slider-thumb {
+      .synth-knob[type=range]::-webkit-slider-thumb {
         appearance: none;
         width: 24px;
         height: 24px;
@@ -313,7 +285,7 @@
         box-shadow: none;
         cursor: pointer;
       }
-      .synth-knob[type="range"]::-moz-range-thumb {
+      .synth-knob[type=range]::-moz-range-thumb {
         width: 24px;
         height: 24px;
         border-radius: 50%;
@@ -322,7 +294,7 @@
         box-shadow: none;
         cursor: pointer;
       }
-      .synth-knob[type="range"]::-ms-thumb {
+      .synth-knob[type=range]::-ms-thumb {
         width: 24px;
         height: 24px;
         border-radius: 50%;
@@ -331,7 +303,7 @@
         box-shadow: none;
         cursor: pointer;
       }
-      .synth-knob[type="range"] {
+      .synth-knob[type=range] {
         background: #23272b;
         width: 60px;
         height: 60px;
@@ -342,148 +314,86 @@
         border: 2px solid #888;
         box-shadow: none;
       }
-      .synth-knob[type="range"]:focus {
+      .synth-knob[type=range]:focus {
         border: 3px solid #00c3ff;
       }
-      .synth-knob[type="range"]::-webkit-slider-runnable-track {
+      .synth-knob[type=range]::-webkit-slider-runnable-track {
         height: 100px;
         background: transparent;
       }
-      .synth-knob[type="range"]::-ms-fill-lower {
+      .synth-knob[type=range]::-ms-fill-lower {
         background: transparent;
       }
-      .synth-knob[type="range"]::-ms-fill-upper {
+      .synth-knob[type=range]::-ms-fill-upper {
         background: transparent;
       }
-      .synth-knob[type="range"]:focus::-webkit-slider-runnable-track {
+      .synth-knob[type=range]:focus::-webkit-slider-runnable-track {
         background: transparent;
       }
-      .synth-knob[type="range"]:focus::-ms-fill-lower {
+      .synth-knob[type=range]:focus::-ms-fill-lower {
         background: transparent;
       }
-      .synth-knob[type="range"]:focus::-ms-fill-upper {
+      .synth-knob[type=range]:focus::-ms-fill-upper {
         background: transparent;
       }
-      .synth-knob[type="range"]::-moz-range-track {
+      .synth-knob[type=range]::-moz-range-track {
         height: 100px;
         background: transparent;
       }
-      .synth-knob[type="range"]:focus::-moz-range-track {
+      .synth-knob[type=range]:focus::-moz-range-track {
         background: transparent;
       }
-      .synth-knob[type="range"]:focus::-ms-fill-lower {
+      .synth-knob[type=range]:focus::-ms-fill-lower {
         background: transparent;
       }
-      .synth-knob[type="range"]:focus::-ms-fill-upper {
+      .synth-knob[type=range]:focus::-ms-fill-upper {
         background: transparent;
       }
-      .synth-knob[type="range"]:focus {
+      .synth-knob[type=range]:focus {
         outline: none;
       }
-      .synth-knob[type="range"]:active::-webkit-slider-thumb {
+      .synth-knob[type=range]:active::-webkit-slider-thumb {
         background: #00ffea;
       }
-      .synth-knob[type="range"]:active::-moz-range-thumb {
+      .synth-knob[type=range]:active::-moz-range-thumb {
         background: #00ffea;
       }
-      .synth-knob[type="range"]:active::-ms-thumb {
+      .synth-knob[type=range]:active::-ms-thumb {
         background: #00ffea;
       }
-      .synth-knob[type="range"]:disabled {
+      .synth-knob[type=range]:disabled {
         opacity: 0.5;
       }
     </style>
   </head>
   <body>
     <div class="btcamp-player">
-      <div class="btcamp-header" style="margin-bottom: 1.2em">
+      <div class="btcamp-header">
         <img src="bitcoin-pixelated.png" alt="Bitcoin Logo" />
         Bitcoin Synth
       </div>
-      <div
-        class="btcamp-btn-row"
-        style="
-          display: flex;
-          flex-direction: row;
-          gap: 2rem;
-          justify-content: center;
-          width: 100%;
-          margin-bottom: 1em;
-        "
-      >
-        <button id="playpause-indicator" class="btcamp-btn">▶️ Play</button>
-        <button id="next" class="btcamp-btn">⏭️ Next</button>
-      </div>
-      <div class="btcamp-display" style="margin-bottom: 2.5em">
+      <div class="btcamp-display" style="margin-top:2.5em; margin-bottom:2.5em;">
         <div id="txplaying"></div>
         <div id="progress-bar">
           <div id="progress-bar-fill"></div>
         </div>
       </div>
-      <div
-        class="synth-controls-row"
-        style="
-          display: flex;
-          flex-direction: row;
-          align-items: flex-end;
-          justify-content: center;
-          gap: 2.5em;
-          margin-bottom: 2.5em;
-        "
-      >
+      <div class="btcamp-btn-row" style="display:flex;flex-direction:row;gap:2rem;justify-content:center;width:100%;margin-bottom:2em;">
+        <button id="playpause-indicator" class="btcamp-btn">▶️ Play</button>
+        <button id="next" class="btcamp-btn">⏭️ Next</button>
+      </div>
+      <div class="synth-controls-row" style="display:flex;flex-direction:row;align-items:flex-end;justify-content:center;gap:2.5em;margin-bottom:2.5em;">
         <div class="synth-control">
-          <input
-            type="range"
-            id="tempo-slider"
-            min="0.5"
-            max="2"
-            step="0.01"
-            value="1"
-            class="synth-knob vertical-knob"
-          />
-          <div class="synth-label">
-            <span style="color: #00ffea">Tempo</span><br /><span
-              id="tempo-value"
-              style="color: #00ffea"
-              >1.00x</span
-            >
-          </div>
+          <input type="range" id="tempo-slider" min="0.5" max="2" step="0.01" value="1" class="synth-knob vertical-knob">
+          <div class="synth-label"><span style="color:#00ffea;">Tempo</span><br><span id="tempo-value" style="color:#00ffea;">1.00x</span></div>
         </div>
         <div class="synth-control">
-          <input
-            type="range"
-            id="mood-slider"
-            min="0"
-            max="1"
-            step="0.01"
-            value="0"
-            class="synth-knob vertical-knob"
-          />
-          <div class="synth-label">
-            <span style="color: #ffb347">Mood</span><br /><span
-              id="mood-value"
-              style="color: #ffb347"
-              >Sad</span
-            >
-          </div>
+          <input type="range" id="mood-slider" min="0" max="1" step="0.01" value="0" class="synth-knob vertical-knob">
+          <div class="synth-label"><span style="color:#ffb347;">Mood</span><br><span id="mood-value" style="color:#ffb347;">Sad</span></div>
         </div>
         <div class="synth-control">
-          <input
-            type="range"
-            id="key-slider"
-            min="0"
-            max="6"
-            step="1"
-            value="0"
-            class="synth-knob vertical-knob"
-          />
-          <div class="synth-label">
-            <span style="color: #b3ff00">Key</span><br /><span
-              id="key-value"
-              style="color: #b3ff00"
-              >C</span
-            >
-          </div>
+          <input type="range" id="key-slider" min="0" max="6" step="1" value="0" class="synth-knob vertical-knob">
+          <div class="synth-label"><span style="color:#b3ff00;">Key</span><br><span id="key-value" style="color:#b3ff00;">C</span></div>
         </div>
       </div>
       <div class="btcamp-info">
@@ -502,23 +412,9 @@
             >turinglabs</a
           ></span
         >
-        <div
-          style="
-            margin-top: 0.5em;
-            color: #00ffea;
-            font-size: 0.8em;
-            letter-spacing: 1px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 1.5em;
-          "
-        >
+        <div style="margin-top: 0.5em; color: #00ffea; font-size: 0.8em; letter-spacing: 1px; display: flex; align-items: center; justify-content: center; gap: 1.5em;">
           <span>Version: v1.0.0</span>
-          <span
-            id="btc-price-display"
-            style="color: #ffb347; font-size: 1.1em"
-          ></span>
+          <span id="btc-price-display" style="color:#ffb347; font-size:1.1em;"></span>
         </div>
       </div>
     </div>
