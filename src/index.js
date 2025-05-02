@@ -37,41 +37,6 @@ function playSound(note, byte, time, amplitude, filterOffset) {
     }, time)
 }
 
-// Show a message to the user on load
-function showInitialMessage() {
-    let msg = document.createElement('div');
-    msg.id = 'start-message';
-    msg.style.fontSize = '1.1rem';
-    msg.style.margin = '1.5rem 0';
-    msg.style.color = '#444';
-    msg.style.maxWidth = '600px';
-    msg.style.marginLeft = 'auto';
-    msg.style.marginRight = 'auto';
-    msg.style.lineHeight = '1.5';
-    msg.innerHTML = 'Press <b>Play</b> to start listening to the Bitcoin blockchain!';
-    document.body.insertBefore(msg, document.querySelector('.controls'));
-}
-
-// Replace the 'Please stop it!' button with a play/pause button
-function setupPlayPauseButton() {
-    const stopBtn = document.getElementById('stop');
-    if (stopBtn) {
-        const playPauseBtn = document.createElement('button');
-        playPauseBtn.id = 'playpause-indicator';
-        playPauseBtn.style.fontSize = '1.2rem';
-        playPauseBtn.style.margin = '0 0.5rem 0 0';
-        playPauseBtn.style.padding = '0.7em 2em';
-        playPauseBtn.style.borderRadius = '8px';
-        playPauseBtn.style.border = 'none';
-        playPauseBtn.style.background = '#dc3545';
-        playPauseBtn.style.color = '#fff';
-        playPauseBtn.style.cursor = 'pointer';
-        playPauseBtn.textContent = '▶️ Play';
-        stopBtn.parentNode.replaceChild(playPauseBtn, stopBtn);
-        return playPauseBtn;
-    }
-    return null;
-}
 
 let isPaused = true;
 let playPauseBtn;
@@ -107,8 +72,7 @@ function resumePlayback() {
 }
 
 document.addEventListener('DOMContentLoaded', function () {
-    showInitialMessage();
-    playPauseBtn = setupPlayPauseButton();
+    playPauseBtn = document.getElementById('playpause-indicator');
     setIndicator('paused');
     if (playPauseBtn) {
         playPauseBtn.onclick = function () {
@@ -146,16 +110,39 @@ function updateVisibility() {
     });
 }
 
+// Progress bar helpers
+function showProgressBar() {
+    const bar = document.getElementById('progress-bar');
+    if (bar) bar.style.display = '';
+}
+function hideProgressBar() {
+    const bar = document.getElementById('progress-bar');
+    if (bar) bar.style.display = 'none';
+    const fill = document.getElementById('progress-bar-fill');
+    if (fill) fill.style.width = '0';
+}
+function setProgressBar(percent) {
+    const fill = document.getElementById('progress-bar-fill');
+    if (fill) fill.style.width = percent + '%';
+}
+
 async function playTransaction(index) {
+    // Clear all previous timeouts before starting a new transaction
+    for (var k in timeout) {
+        clearTimeout(timeout[k]);
+    }
+    timeout = [];
     if (context.state === 'suspended') {
         await context.resume();
     }
     setIndicator('playing');
+    hideProgressBar(); // Hide and reset before starting
+    setProgressBar(0);
     if (txns[parseInt(index)] !== undefined) {
         var tx = await axios.get(`https://mempool.space/api/tx/${txns[parseInt(index)]}/hex`)
         var toplay = tx.data
         playingindex = index
-        document.getElementById("txplaying").innerHTML = 'Playing TXID<br><a target="_blank" href="https://live.blockcypher.com/btc/tx/' + txns[parseInt(index)] + '/">' + txns[parseInt(index)] + '</a>';
+        document.getElementById("txplaying").innerHTML = 'Playing TXID<br><a target="_blank" href="https://mempool.space/tx/' + txns[parseInt(index)] + '/">' + txns[parseInt(index)].substring(0, 25) + '...</a>';
         document.getElementById("rawtx").innerHTML = toplay;
         updateVisibility();
 
@@ -169,17 +156,15 @@ async function playTransaction(index) {
         synth.setAmpReleaseTime(0.8); // Longer release
 
         let prevNote = 60; // Start from middle C
-        let melodyTimeouts = [];
 
         // --- Melody Instrument ---
         function playMelodyNotes() {
-            // Melody config: sine wave, defined delay/feedback
             let melodyNotes = 8 + Math.floor(Math.random() * 8); // 8-16 notes
             let melodyBase = 60 + Math.floor(Math.random() * 12); // C4-B4
             for (let m = 0; m < melodyNotes; m++) {
                 let melodyDelay = m * (600 + Math.floor(Math.random() * 600)); // 600-1200ms between notes
                 let melodyNote = melodyBase + Math.floor(Math.random() * 12); // Random note in an octave
-                melodyTimeouts.push(setTimeout(() => {
+                timeout.push(setTimeout(() => {
                     // Save/restore synth config
                     let prevWave = synth.wave;
                     let prevAttack = synth._ampAttackTime;
@@ -204,72 +189,65 @@ async function playTransaction(index) {
                 }, melodyDelay));
             }
         }
-
         // --- End Melody Instrument ---
+
+        // Progress bar setup
+        const totalNotes = Math.floor(toplay.length / 2);
+        showProgressBar();
+        setProgressBar(0);
 
         // Recursive function to play each note in sequence (ambient background)
         function playNoteAt(i) {
             if (i > toplay.length) {
-                // All notes played, move to next transaction after a pause
-                setTimeout(function () {
-                    // Clear melody timeouts
-                    melodyTimeouts.forEach(t => clearTimeout(t));
+                setProgressBar(100);
+                timeout.push(setTimeout(function () {
+                    hideProgressBar();
                     playNext();
-                }, 500);
+                }, 500));
                 return;
             }
             var byteHex = toplay.substr(i, 2)
             var byteVal = parseInt(byteHex, 16)
-            // Faster timing
             var delay = 100 + (byteVal % 100); // Vary time between 100-200ms
-            // Create more musical note progression
             var noteOffset = (byteVal % 24) - 12; // Range of two octaves, centered
             var midiNote = Math.max(36, Math.min(96, prevNote + noteOffset));
             prevNote = midiNote; // Remember last note for smoother progression
-            // Lower amplitude for ambient
             var amplitude = 0.1 + (byteVal % 64) / 256; // Range 0.1-0.35
-            // Dynamic filter offset based on byte value
             var filterOffset = 0.4 + (byteVal % 128) / 256; // Range 0.4-0.9
-            // Alternate or randomize oscillator wave for rain/ambient effect
             if (Math.random() < 0.5) {
                 synth.setOscWave(0); // Sine (rain-like)
             } else {
                 synth.setOscWave(2); // Sawtooth (ambient)
             }
-            if (i < toplay.length) {
-                playSound(midiNote, byteHex, 0, amplitude, filterOffset);
-                setTimeout(function () {
-                    playNoteAt(i + 2);
-                }, delay);
-            } else {
-                // End of transaction
-                setTimeout(function () {
-                    // Clear melody timeouts
-                    melodyTimeouts.forEach(t => clearTimeout(t));
-                    playNext();
-                }, 500);
-            }
+            // Update progress bar
+            setProgressBar(Math.min(100, Math.round((i / toplay.length) * 100)));
+            playSound(midiNote, byteHex, 0, amplitude, filterOffset);
+            timeout.push(setTimeout(function () {
+                playNoteAt(i + 2);
+            }, delay));
         }
         playNoteAt(0);
         playMelodyNotes();
         updateNextButtonVisibility();
     } else {
-        console.log('NO TX FOUND!')
         document.getElementById("txplaying").innerHTML = '';
         document.getElementById("rawtx").innerHTML = '';
         document.getElementById("nowplaying").innerHTML = '';
         updateVisibility();
         updateNextButtonVisibility();
+        hideProgressBar();
     }
 }
 
 function playNext() {
     isplaying = false
     var playnext = parseInt(playingindex) + 1
-    console.log('NEXT IS #' + playnext)
     for (var k in timeout) {
         clearTimeout(timeout[k])
     }
+    timeout = [];
+    hideProgressBar();
+    setProgressBar(0);
     if (txns[playnext] !== undefined) {
         playTransaction(playnext)
     } else {
@@ -282,7 +260,10 @@ function stopSounds() {
     for (var k in timeout) {
         clearTimeout(timeout[k])
     }
+    timeout = [];
     setIndicator('paused');
+    hideProgressBar();
+    setProgressBar(0);
 }
 
 async function parseblock(blockHash) {

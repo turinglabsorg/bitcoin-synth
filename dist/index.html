@@ -3,187 +3,249 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>The Blockchain Synth</title>
+    <title>Bitcoin Synth btcamp</title>
     <script src="https://unpkg.com/lodash@4.16.6"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=Roboto+Mono:ital,wght@0,100..700;1,100..700&family=Source+Code+Pro:ital,wght@0,200..900;1,200..900&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&display=swap"
       rel="stylesheet"
     />
-
     <style>
       html,
       body {
-        box-sizing: border-box;
+        height: 100%;
         width: 100%;
-        overflow-x: hidden;
-      }
-      *,
-      *:before,
-      *:after {
-        box-sizing: inherit;
-        font-family: "Roboto Mono";
+        margin: 0;
+        padding: 0;
+        background: #111;
+        overflow: hidden;
       }
       body {
         min-height: 100vh;
-        background: #f5f5f5;
-        padding: 2rem 1rem;
-        text-align: center;
+        min-width: 100vw;
+        width: 100vw;
+        height: 100vh;
+        display: flex;
+        align-items: stretch;
+        justify-content: stretch;
+      }
+      .btcamp-player {
+        width: 100vw;
+        height: 100vh;
+        background: #181c20;
+        border: none;
+        border-radius: 0;
+        box-shadow: none;
         display: flex;
         flex-direction: column;
-        align-items: center;
+        overflow: hidden;
+        font-family: "Roboto Mono", monospace;
+        position: relative;
         justify-content: flex-start;
+        padding: 10px 70px 10px 10px;
       }
-      .logo {
-        width: 80px;
-        height: 80px;
-        margin-bottom: 1.5rem;
-        max-width: 100%;
+      .btcamp-header {
+        background: #181c20;
+        color: #00ff00;
+        font-weight: bold;
+        font-size: 1.3rem;
+        padding: 1.2rem 2rem 1.2rem 2rem;
+        border-bottom: 2px solid #222;
+        letter-spacing: 2px;
+        display: flex;
+        align-items: center;
+        gap: 0.7rem;
       }
-      h1 {
-        font-size: 2rem;
-        margin-bottom: 1.5rem;
-        color: #333;
-        max-width: 100%;
-        overflow-wrap: break-word;
+      .btcamp-header img {
+        width: 32px;
+        height: 32px;
+        margin-right: 0.5rem;
       }
-      #txplaying {
-        font-size: 1.2rem;
-        margin-bottom: 1rem;
-        color: #666;
-        word-break: break-all;
-        max-width: 100%;
-        overflow-wrap: break-word;
-      }
-      #rawtx {
-        font-size: 0.9rem;
-        padding: 1rem;
-        background: #f8f8f8;
-        border-radius: 8px;
-        margin: 0 auto 1.5rem auto;
-        word-wrap: break-word;
-        max-width: 600px;
+      .btcamp-display {
+        background: #181c20;
+        color: #00ff00;
+        font-size: 1.1rem;
+        padding: 1.2rem 2rem 0.7rem 2rem;
+        border-bottom: 2px solid #222;
+        min-height: 60px;
+        max-height: 60px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
         width: 100%;
-        overflow-x: auto;
+      }
+      #progress-bar {
+        width: 100%;
+        max-width: 100%;
+        height: 10px;
+        background: #333;
+        border-radius: 5px;
+        margin: 0.5rem 0 0 0;
+        overflow: hidden;
         display: block;
       }
-      #nowplaying {
-        font-size: 8rem;
-        line-height: 1;
-        margin: 1.5rem 0;
-        color: #333;
-        max-width: 100%;
-        overflow-x: auto;
-        overflow-wrap: break-word;
-        word-break: break-all;
+      #progress-bar-fill {
+        height: 100%;
+        width: 0;
+        background: linear-gradient(90deg, #00c3ff 60%, #00ffea 100%);
+        transition: width 0.2s;
       }
-      .controls {
+      .btcamp-controls {
+        background: #181c20;
+        border-bottom: 2px solid #222;
+        padding: 1.2rem 2rem 1.2rem 2rem;
         display: flex;
-        gap: 1rem;
+        align-items: center;
         justify-content: center;
-        margin: 1.5rem 0;
+        gap: 2rem;
         width: 100%;
       }
-      button {
-        padding: 0.8rem 1.5rem;
-        font-size: 1rem;
-        border: none;
-        border-radius: 6px;
+      .btcamp-btn {
+        background: #111;
+        color: #00c3ff;
+        border: 2px solid #00c3ff;
+        border-radius: 5px;
+        font-size: 1.3rem;
+        padding: 0.5em 2em;
         cursor: pointer;
-        transition: all 0.3s ease;
-        background: #007bff;
-        color: white;
+        font-family: inherit;
+        transition: background 0.2s, color 0.2s;
+      }
+      .btcamp-btn:active {
+        background: #00c3ff;
+        color: #181c20;
+      }
+      .btcamp-info {
+        background: #181c20;
+        color: #00ff00;
+        font-size: 1.1rem;
+        padding: 1.2rem 2rem;
+        border-bottom: 2px solid #222;
+        min-height: 38px;
+        max-height: 38px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        display: flex;
+        align-items: center;
         width: 100%;
-        max-width: 100%;
-        box-sizing: border-box;
       }
-      button:hover {
-        background: #0056b3;
-        transform: translateY(-2px);
-      }
-      #stop {
-        background: #dc3545;
-      }
-      #stop:hover {
-        background: #c82333;
-      }
-      .footer {
-        margin-top: 2rem;
-        color: #666;
-        max-width: 100%;
-        overflow-wrap: break-word;
-      }
-      .footer a {
-        color: #007bff;
-        text-decoration: none;
+      .btcamp-raw {
+        background: #111;
+        height: calc(100vh - 200px);
+        color: #00ffea;
+        font-size: 0.95rem;
+        padding: 1.2rem 2rem;
+        flex: 1 1 auto;
+        overflow-y: auto;
         word-break: break-all;
+        border-bottom: 2px solid #222;
+        width: 100%;
       }
-      .footer a:hover {
+      .btcamp-nowplaying {
+        background: #181c20;
+        color: #00ffea;
+        font-size: 2.2rem;
+        font-weight: bold;
+        padding: 1.2rem 2rem;
+        min-height: 48px;
+        max-height: 48px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        letter-spacing: 2px;
+        overflow: hidden;
+        width: 100%;
+      }
+      .btcamp-footer {
+        background: #181c20;
+        color: #00ff00;
+        text-transform: uppercase;
+        text-align: center;
+        font-size: 0.7rem;
+        padding: 1.2rem 2rem;
+        border-top: 2px solid #222;
+        width: 100%;
+      }
+      .btcamp-footer a {
+        color: #00c3ff;
+        text-decoration: none;
+      }
+      .btcamp-footer a:hover {
         text-decoration: underline;
       }
-      @media (max-width: 768px) {
-        body {
-          padding: 1rem 0.2rem;
-          width: calc(100vw - 15px);
+      @media (max-width: 600px) {
+        .btcamp-player {
+          width: 100vw;
+          min-width: 0;
+          height: 100vh;
+          max-width: 100vw;
+          max-height: 100vh;
+          border-radius: 0;
+          box-sizing: border-box;
+          padding: 10px 25px 10px 10px;
         }
-        h1 {
-          font-size: 1.5rem;
+        .btcamp-header,
+        .btcamp-display,
+        .btcamp-controls,
+        .btcamp-info,
+        .btcamp-raw,
+        .btcamp-nowplaying,
+        .btcamp-footer {
+          padding-left: 0.5rem;
+          padding-right: 0.5rem;
         }
-        #nowplaying {
-          font-size: 4rem;
+        .btcamp-nowplaying {
+          font-size: 1.2rem;
+          min-height: 32px;
+          max-height: 32px;
+          justify-content: center;
         }
-        .controls {
-          flex-direction: column;
-          max-width: 200px;
+        .btcamp-raw {
+          font-size: 0.7rem;
         }
-        button {
-          width: 100%;
-          max-width: 100%;
-        }
-        #rawtx {
-          font-size: 0.8rem;
-          padding: 0.5rem;
-          max-width: 300px;
+        .btcamp-btn {
+          font-size: 1rem;
+          padding: 0.2em 0.7em;
         }
       }
     </style>
   </head>
   <body>
-    <img src="bitcoin-pixelated.png" alt="Bitcoin Logo" class="logo" />
-    <h1>Bitcoin Synth!</h1>
-    <div id="txplaying" style="display: none;"></div>
-    <div id="rawtx" style="display: none;"></div>
-    <div id="nowplaying" style="display: none;"></div>
-    <div class="controls">
-      <button id="stop">PLEASE STOP IT!</button>
-      <button id="next">PLAY NEXT!</button>
-    </div>
-    <div class="footer">
-      Crazy experiment made by
-      <br />
-      <a
-        href="https://github.com/turinglabsorg"
-        target="_blank"
-        rel="noopener noreferrer"
-        >turinglabs</a
-      >
+    <div class="btcamp-player">
+      <div class="btcamp-header">
+        <img src="bitcoin-pixelated.png" alt="Bitcoin Logo" />
+        Bitcoin Synth
+      </div>
+      <div class="btcamp-display">
+        <div id="txplaying"></div>
+        <div id="progress-bar">
+          <div id="progress-bar-fill"></div>
+        </div>
+      </div>
+      <div class="btcamp-controls">
+        <button id="playpause-indicator" class="btcamp-btn">▶️ Play</button>
+        <button id="next" class="btcamp-btn">⏭️ Next</button>
+      </div>
+      <div class="btcamp-info">
+        <span id="info-label">Transaction:</span>
+        <span id="info-value"></span>
+      </div>
+      <div class="btcamp-raw" id="rawtx"></div>
+      <div class="btcamp-nowplaying" id="nowplaying"></div>
+      <div class="btcamp-footer">
+        <span
+          >Crazy experiment by
+          <a
+            href="https://github.com/turinglabsorg"
+            target="_blank"
+            rel="noopener noreferrer"
+            >turinglabs</a
+          ></span
+        >
+      </div>
     </div>
     <script src="main.js"></script>
-    <script>
-      // Shorten TXID display if present
-      const txplaying = document.getElementById("txplaying");
-      const observer = new MutationObserver(() => {
-        if (txplaying && txplaying.textContent.length > 24) {
-          const full = txplaying.textContent;
-          txplaying.textContent = `${full.slice(0, 8)}...${full.slice(-8)}`;
-        }
-      });
-      observer.observe(txplaying, {
-        childList: true,
-        subtree: true,
-        characterData: true,
-      });
-    </script>
   </body>
 </html>
