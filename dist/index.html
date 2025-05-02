@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Bitcoin Synth btcamp</title>
+    <title>Bitcoin Synth</title>
     <script src="https://unpkg.com/lodash@4.16.6"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -50,12 +50,13 @@
         color: #00ff00;
         font-weight: bold;
         font-size: 1.3rem;
-        padding: 1.2rem 2rem 1.2rem 2rem;
+        padding: 1.2rem 2rem 0.7rem 2rem;
         border-bottom: 2px solid #222;
         letter-spacing: 2px;
         display: flex;
         align-items: center;
         gap: 0.7rem;
+        margin-bottom: 2.5rem;
       }
       .btcamp-header img {
         width: 32px;
@@ -133,7 +134,6 @@
       }
       .btcamp-raw {
         background: #111;
-        height: calc(100vh - 200px);
         color: #00ffea;
         font-size: 0.95rem;
         padding: 1.2rem 2rem;
@@ -141,6 +141,8 @@
         overflow-y: auto;
         word-break: break-all;
         border-bottom: 2px solid #222;
+        max-height: 300px;
+        min-height: 180px;
         width: 100%;
       }
       .btcamp-nowplaying {
@@ -203,6 +205,8 @@
           justify-content: center;
         }
         .btcamp-raw {
+          max-height: 180px;
+          min-height: 90px;
           font-size: 0.7rem;
         }
         .btcamp-btn {
