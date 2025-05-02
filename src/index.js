@@ -15,6 +15,7 @@ var nextblock = ''
 let tempo = 1.0;
 let mood = 0.0;
 let key = 'C';
+let delayAmount = 0.7;
 const keyToMidi = { C: 60, D: 62, E: 64, F: 65, G: 67, A: 69, B: 71 };
 
 function sleep(ms) {
@@ -75,6 +76,12 @@ function resumePlayback() {
     }
 }
 
+function updateSynthDelay() {
+    // Update delay for both ambient and melody synths
+    synth.setDelayFeedback(delayAmount);
+    synth.setDelayTimeTempo(90 + delayAmount * 100, 0.25 + delayAmount * 0.25);
+}
+
 document.addEventListener('DOMContentLoaded', function () {
     playPauseBtn = document.getElementById('playpause-indicator');
     setIndicator('paused');
@@ -124,6 +131,20 @@ document.addEventListener('DOMContentLoaded', function () {
         // Initialize value
         keyValue.textContent = keys[parseInt(keySlider.value)];
         key = keys[parseInt(keySlider.value)];
+    }
+    // Delay slider setup
+    const delaySlider = document.getElementById('delay-slider');
+    const delayValue = document.getElementById('delay-value');
+    if (delaySlider && delayValue) {
+        delaySlider.oninput = function () {
+            delayAmount = parseFloat(this.value);
+            delayValue.textContent = delayAmount.toFixed(2);
+            updateSynthDelay();
+        };
+        // Initialize value
+        delayValue.textContent = delaySlider.value;
+        delayAmount = parseFloat(delaySlider.value);
+        updateSynthDelay();
     }
     // Fetch and display BTC price and set mood on load
     updateMoodFromPrice();
@@ -198,8 +219,8 @@ async function playTransaction(index) {
         document.getElementsByClassName('btcamp-display')[0].style.display = 'flex';
 
         // Set up ambient synth parameters (default)
-        synth.setDelayFeedback(0.6); // Increase delay feedback for more ambience
-        synth.setDelayTimeTempo(90, 0.375); // Slower tempo with dotted eighth note delay
+        synth.setDelayFeedback(delayAmount); // User controlled delay feedback
+        synth.setDelayTimeTempo(90 + delayAmount * 100, 0.25 + delayAmount * 0.25); // User controlled delay time
         synth.setFilterCutoff(0.3); // Start with a lower cutoff
         synth.setFilterResonance(0.4); // Add some resonance
         synth.setFilterEnvMod(0.6); // More filter envelope modulation
@@ -257,8 +278,8 @@ async function playTransaction(index) {
                     let prevDelayTimeTempo = synth._rightDelay.delayTime.value;
                     // Set melody params
                     synth.setOscWave(0); // Sine for melody
-                    synth.setDelayFeedback(0.7); // More delay
-                    synth.setDelayTimeTempo(140, 0.35); // Longer delay time
+                    synth.setDelayFeedback(delayAmount);
+                    synth.setDelayTimeTempo(90 + delayAmount * 100, 0.25 + delayAmount * 0.25);
                     synth.setAmpAttackTime(0.05);
                     synth.setAmpReleaseTime(0.2);
                     let melAmp = 0.8 * (0.7 + Math.random() * 0.6); // Lowered amplitude for melody
