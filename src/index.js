@@ -16,7 +16,667 @@ let tempo = 1.0;
 let mood = 0.0;
 let key = 'C';
 let delayAmount = 0.7;
+let harmonyIntensity = 0.8;
+let drumVolume = 0.6;
+let drumComplexity = 0.5;
 const keyToMidi = { C: 60, D: 62, E: 64, F: 65, G: 67, A: 69, B: 71 };
+
+// Drum synthesis system
+class DrumSynth {
+    constructor(audioContext) {
+        this.context = audioContext;
+    }
+    
+    // Kick drum - low frequency sine wave with quick decay
+    playKick(volume = 0.7) {
+        try {
+            if (this.context.state === 'suspended') {
+                this.context.resume();
+            }
+            
+            const osc = this.context.createOscillator();
+            const gainNode = this.context.createGain();
+            const filter = this.context.createBiquadFilter();
+            
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(80, this.context.currentTime); // Slightly higher for more punch
+            osc.frequency.exponentialRampToValueAtTime(40, this.context.currentTime + 0.1);
+            
+            filter.type = 'lowpass';
+            filter.frequency.value = 200; // Higher cutoff for more presence
+            
+            gainNode.gain.setValueAtTime(volume * 1.5, this.context.currentTime); // Louder
+            gainNode.gain.exponentialRampToValueAtTime(0.01, this.context.currentTime + 0.4);
+            
+            osc.connect(filter);
+            filter.connect(gainNode);
+            gainNode.connect(this.context.destination);
+            
+            osc.start(this.context.currentTime);
+            osc.stop(this.context.currentTime + 0.4);
+            
+            console.log('🥁 Kick drum played at volume:', volume * 1.5);
+        } catch (error) {
+            console.error('❌ Kick drum error:', error);
+        }
+    }
+    
+    // Snare drum - noise burst with bandpass filter
+    playSnare(volume = 0.5) {
+        try {
+            if (this.context.state === 'suspended') {
+                this.context.resume();
+            }
+            
+            const bufferSize = this.context.sampleRate * 0.3;
+            const buffer = this.context.createBuffer(1, bufferSize, this.context.sampleRate);
+            const output = buffer.getChannelData(0);
+            
+            // Generate white noise
+            for (let i = 0; i < bufferSize; i++) {
+                output[i] = (Math.random() * 2 - 1);
+            }
+            
+            const source = this.context.createBufferSource();
+            source.buffer = buffer;
+            
+            const filter = this.context.createBiquadFilter();
+            filter.type = 'bandpass';
+            filter.frequency.value = 300; // Higher frequency for more snap
+            filter.Q.value = 2; // More resonance
+            
+            const gainNode = this.context.createGain();
+            gainNode.gain.setValueAtTime(volume * 2, this.context.currentTime); // Much louder
+            gainNode.gain.exponentialRampToValueAtTime(0.01, this.context.currentTime + 0.3);
+            
+            source.connect(filter);
+            filter.connect(gainNode);
+            gainNode.connect(this.context.destination);
+            
+            source.start(this.context.currentTime);
+            
+            console.log('🥁 Snare drum played at volume:', volume * 2);
+        } catch (error) {
+            console.error('❌ Snare drum error:', error);
+        }
+    }
+    
+    // Hi-hat - high frequency noise burst
+    playHiHat(volume = 0.3, open = false) {
+        try {
+            if (this.context.state === 'suspended') {
+                this.context.resume();
+            }
+            
+            const bufferSize = this.context.sampleRate * (open ? 0.3 : 0.1);
+            const buffer = this.context.createBuffer(1, bufferSize, this.context.sampleRate);
+            const output = buffer.getChannelData(0);
+            
+            // Generate filtered noise
+            for (let i = 0; i < bufferSize; i++) {
+                output[i] = (Math.random() * 2 - 1) * Math.exp(-i / bufferSize * 8);
+            }
+            
+            const source = this.context.createBufferSource();
+            source.buffer = buffer;
+            
+            const filter = this.context.createBiquadFilter();
+            filter.type = 'highpass';
+            filter.frequency.value = open ? 6000 : 8000; // Lower frequency for more audibility
+            
+            const gainNode = this.context.createGain();
+            gainNode.gain.setValueAtTime(volume * 2, this.context.currentTime); // Louder
+            gainNode.gain.exponentialRampToValueAtTime(0.01, this.context.currentTime + (open ? 0.3 : 0.15));
+            
+            source.connect(filter);
+            filter.connect(gainNode);
+            gainNode.connect(this.context.destination);
+            
+            source.start(this.context.currentTime);
+            
+            console.log('🥁 Hi-hat played:', open ? 'open' : 'closed', 'volume:', volume * 2);
+        } catch (error) {
+            console.error('❌ Hi-hat error:', error);
+        }
+    }
+    
+    // Cymbal - metallic crash sound
+    playCymbal(volume = 0.4) {
+        const osc1 = this.context.createOscillator();
+        const osc2 = this.context.createOscillator();
+        const osc3 = this.context.createOscillator();
+        const gainNode = this.context.createGain();
+        const filter = this.context.createBiquadFilter();
+        
+        osc1.type = 'square';
+        osc2.type = 'square';  
+        osc3.type = 'triangle';
+        
+        osc1.frequency.value = 400;
+        osc2.frequency.value = 800;
+        osc3.frequency.value = 1600;
+        
+        filter.type = 'highpass';
+        filter.frequency.value = 3000;
+        
+        gainNode.gain.setValueAtTime(volume, this.context.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, this.context.currentTime + 1.5);
+        
+        osc1.connect(filter);
+        osc2.connect(filter);
+        osc3.connect(filter);
+        filter.connect(gainNode);
+        gainNode.connect(this.context.destination);
+        
+        osc1.start(this.context.currentTime);
+        osc2.start(this.context.currentTime);
+        osc3.start(this.context.currentTime);
+        osc1.stop(this.context.currentTime + 1.5);
+        osc2.stop(this.context.currentTime + 1.5);
+        osc3.stop(this.context.currentTime + 1.5);
+    }
+}
+
+// Initialize drum synth
+const drums = new DrumSynth(context);
+
+// Test function for drums
+function testDrums() {
+    console.log('🎵 Testing drums...');
+    if (context.state === 'suspended') {
+        context.resume();
+    }
+    
+    drums.playKick(1.0);
+    setTimeout(() => drums.playSnare(1.0), 250);
+    setTimeout(() => drums.playHiHat(1.0, false), 500);
+    setTimeout(() => drums.playHiHat(1.0, true), 750);
+    setTimeout(() => drums.playCymbal(0.8), 1000);
+}
+
+// Standalone Drum Pad System
+class DrumPad {
+    constructor(drumSynth) {
+        this.drums = drumSynth;
+        this.isLooping = false;
+        this.loopInterval = null;
+        this.bpm = 120;
+        this.step = 0;
+        
+        // Basic 4/4 pattern
+        this.pattern = {
+            kick: [1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0],
+            snare: [0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0],
+            hihat: [1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0],
+        };
+        
+        this.setupEventListeners();
+    }
+    
+    setupEventListeners() {
+        // Individual drum pad buttons
+        document.getElementById('kick-pad').onclick = () => {
+            console.log('🔴 Kick pad pressed');
+            this.playKick();
+        };
+        
+        document.getElementById('snare-pad').onclick = () => {
+            console.log('🟢 Snare pad pressed');
+            this.playSnare();
+        };
+        
+        document.getElementById('hihat-pad').onclick = () => {
+            console.log('🔵 Hi-hat pad pressed');
+            this.playHiHat();
+        };
+        
+        document.getElementById('cymbal-pad').onclick = () => {
+            console.log('🟡 Cymbal pad pressed');
+            this.playCymbal();
+        };
+        
+        // Loop toggle button
+        document.getElementById('drum-loop-toggle').onclick = () => {
+            this.toggleLoop();
+        };
+        
+        // Transaction drum button
+        document.getElementById('transaction-drum-button').onclick = () => {
+            console.log('🔗 Transaction drum button pressed');
+            this.playCurrentTransactionBeat();
+        };
+        
+        // BPM slider
+        const bpmSlider = document.getElementById('drum-bpm');
+        const bpmValue = document.getElementById('bpm-value');
+        
+        bpmSlider.oninput = () => {
+            this.bpm = parseInt(bpmSlider.value);
+            bpmValue.textContent = this.bpm;
+            
+            // Restart loop if running to apply new BPM
+            if (this.isLooping) {
+                this.stopLoop();
+                this.startLoop();
+            }
+        };
+    }
+    
+    playKick() {
+        if (context.state === 'suspended') {
+            context.resume();
+        }
+        this.drums.playKick(0.8);
+    }
+    
+    playSnare() {
+        if (context.state === 'suspended') {
+            context.resume();
+        }
+        this.drums.playSnare(0.7);
+    }
+    
+    playHiHat() {
+        if (context.state === 'suspended') {
+            context.resume();
+        }
+        this.drums.playHiHat(0.5, false);
+    }
+    
+    playCymbal() {
+        if (context.state === 'suspended') {
+            context.resume();
+        }
+        this.drums.playCymbal(0.6);
+    }
+    
+    startLoop() {
+        if (this.isLooping) return;
+        
+        console.log('🔄 Starting drum loop at', this.bpm, 'BPM');
+        this.isLooping = true;
+        this.step = 0;
+        
+        const stepTime = (60 / this.bpm) * 1000 / 4; // 16th note timing
+        
+        this.loopInterval = setInterval(() => {
+            // Play drums based on pattern
+            if (this.pattern.kick[this.step]) {
+                this.playKick();
+            }
+            if (this.pattern.snare[this.step]) {
+                this.playSnare();
+            }
+            if (this.pattern.hihat[this.step]) {
+                this.playHiHat();
+            }
+            
+            this.step = (this.step + 1) % 16;
+        }, stepTime);
+        
+        // Update button text
+        document.getElementById('drum-loop-toggle').textContent = '⏹️ Stop Loop';
+    }
+    
+    stopLoop() {
+        if (!this.isLooping) return;
+        
+        console.log('⏹️ Stopping drum loop');
+        this.isLooping = false;
+        
+        if (this.loopInterval) {
+            clearInterval(this.loopInterval);
+            this.loopInterval = null;
+        }
+        
+        // Update button text
+        document.getElementById('drum-loop-toggle').textContent = '🔄 Start Loop';
+    }
+    
+    toggleLoop() {
+        if (this.isLooping) {
+            this.stopLoop();
+        } else {
+            this.startLoop();
+        }
+    }
+    
+    // Generate drum pattern from transaction hex data
+    generatePatternFromTransaction(hexString) {
+        console.log('🔍 Generating pattern from transaction hex:', hexString.substring(0, 64) + '...');
+        
+        // Initialize empty 16-step patterns
+        const pattern = {
+            kick: new Array(16).fill(0),
+            snare: new Array(16).fill(0),
+            hihat: new Array(16).fill(0),
+            cymbal: new Array(16).fill(0)
+        };
+        
+        // Create a hash-like distribution from hex data for more balanced patterns
+        let hexDistribution = {};
+        for (let i = 0; i < Math.min(hexString.length, 128); i++) {
+            const char = hexString[i];
+            hexDistribution[char] = (hexDistribution[char] || 0) + 1;
+        }
+        
+        console.log('📊 Hex distribution:', hexDistribution);
+        
+        // Enhanced mapping system - use combinations and byte values for variety
+        for (let i = 0; i < Math.min(hexString.length, 64); i += 4) {
+            const chunk = hexString.substr(i, 4); // Get 4-char chunks (2 bytes)
+            if (chunk.length < 4) continue;
+            
+            const byte1 = parseInt(chunk.substr(0, 2), 16);
+            const byte2 = parseInt(chunk.substr(2, 2), 16);
+            const step = Math.floor(i / 4) % 16;
+            
+            // Use byte value ranges for more balanced distribution
+            const combinedValue = (byte1 + byte2) % 256;
+            
+            // Musical drum placement based on combined byte values
+            // KICK DRUM: Use specific ranges and patterns to avoid too many zeros
+            if ((combinedValue % 16) < 4 && (step % 4 === 0 || step % 4 === 2)) {
+                pattern.kick[step] = 1;
+                console.log(`🔴 Kick at step ${step} (bytes: ${byte1}+${byte2}=${combinedValue})`);
+            } else if (combinedValue % 32 < 3 && step % 8 === 6) {
+                // Syncopated kicks
+                pattern.kick[step] = 1;
+                console.log(`🔴 Synco kick at step ${step} (${combinedValue})`);
+            }
+            
+            // SNARE DRUM: Classic backbeat positions with variations
+            if ((step === 4 || step === 12) && combinedValue % 8 < 6) {
+                // Main backbeat
+                pattern.snare[step] = 1;
+                console.log(`🟢 Backbeat snare at step ${step} (${combinedValue})`);
+            } else if ((combinedValue % 12) < 3 && (step === 6 || step === 14 || step === 10)) {
+                // Fill snares
+                pattern.snare[step] = 1;
+                console.log(`🟢 Fill snare at step ${step} (${combinedValue})`);
+            }
+            
+            // HI-HAT: Consistent rhythm with variations
+            if (combinedValue % 4 < 3) {
+                // Regular hi-hat pattern
+                if (step % 2 === 0) {
+                    pattern.hihat[step] = 1; // Closed
+                    console.log(`🔵 Closed hi-hat at step ${step} (${combinedValue})`);
+                } else if (combinedValue % 8 < 2) {
+                    pattern.hihat[step] = 2; // Open
+                    console.log(`🔵 Open hi-hat at step ${step} (${combinedValue})`);
+                }
+            }
+            
+            // CYMBAL: Rare accents
+            if (combinedValue % 64 < 2 && step % 16 === 0) {
+                pattern.cymbal[step] = 1;
+                console.log(`🟡 Cymbal crash at step ${step} (${combinedValue})`);
+            }
+            
+            // ADDITIONAL COMPLEXITY: Use specific hex patterns for special fills
+            const hexSum = chunk.split('').reduce((sum, char) => sum + parseInt(char, 16), 0);
+            
+            if (hexSum > 40) { // High hex sum = complex fill
+                console.log(`🎯 Complex fill detected (sum: ${hexSum}) at step ${step}`);
+                // Add some extra complexity
+                if (step % 8 === 7) {
+                    pattern.kick[(step + 1) % 16] = 1;
+                    pattern.snare[(step + 2) % 16] = 1;
+                    console.log(`🎵 Added fill pattern at steps ${(step+1)%16}, ${(step+2)%16}`);
+                }
+            }
+            
+            // Use specific hex characters for guaranteed variety
+            if (chunk.includes('f') || chunk.includes('e') || chunk.includes('d')) {
+                // High hex values = more hi-hat activity
+                pattern.hihat[(step + 1) % 16] = Math.random() < 0.7 ? 1 : 2;
+                console.log(`🔵 Hex accent hi-hat at step ${(step+1)%16} (${chunk})`);
+            }
+            
+            if (chunk.includes('8') || chunk.includes('9') || chunk.includes('a')) {
+                // Mid hex values = potential snare accents
+                if (step % 4 === 1 && Math.random() < 0.4) {
+                    pattern.snare[step] = 1;
+                    console.log(`🟢 Hex accent snare at step ${step} (${chunk})`);
+                }
+            }
+        }
+        
+        // Ensure minimum musical elements (prevent empty patterns)
+        let kickCount = pattern.kick.reduce((a, b) => a + b, 0);
+        let snareCount = pattern.snare.reduce((a, b) => a + b, 0);
+        
+        if (kickCount === 0) {
+            pattern.kick[0] = 1;
+            pattern.kick[8] = 1;
+            console.log('🔴 Added default kick pattern');
+        }
+        
+        if (snareCount === 0) {
+            pattern.snare[4] = 1;
+            pattern.snare[12] = 1;
+            console.log('🟢 Added default snare pattern');
+        }
+        
+        console.log('🎵 Generated transaction pattern:');
+        console.log('Kick:  ', pattern.kick.join(''));
+        console.log('Snare: ', pattern.snare.join(''));
+        console.log('Hi-hat:', pattern.hihat.join(''));
+        console.log('Cymbal:', pattern.cymbal.join(''));
+        
+        return pattern;
+    }
+    
+    // Start loop with transaction-based pattern
+    startTransactionLoop(hexString) {
+        if (this.isLooping) {
+            this.stopLoop();
+        }
+        
+        // Generate pattern from transaction
+        this.pattern = this.generatePatternFromTransaction(hexString);
+        
+        // Start the loop
+        this.startLoop();
+    }
+    
+    // Play beat based on current displayed transaction
+    playCurrentTransactionBeat() {
+        // Get the raw transaction hex from the display
+        const rawTxElement = document.getElementById('rawtx');
+        if (rawTxElement && rawTxElement.textContent) {
+            const hexString = rawTxElement.textContent.trim();
+            if (hexString.length > 10 && hexString !== 'Still need to be fetched, press play..') {
+                console.log('🔗 Playing beat for current transaction');
+                this.startTransactionLoop(hexString);
+            } else {
+                console.log('⚠️ No transaction hex available, using demo pattern');
+                // Use demo hex for testing
+                const demoHex = '0123456789abcdef0123456789abcdef';
+                this.startTransactionLoop(demoHex);
+            }
+        } else {
+            console.log('⚠️ No transaction element found, using demo pattern');
+            // Use demo hex for testing
+            const demoHex = '0123456789abcdef0123456789abcdef';
+            this.startTransactionLoop(demoHex);
+        }
+    }
+    
+    // Updated loop function to handle open hi-hats and cymbals
+    startLoop() {
+        if (this.isLooping) return;
+        
+        console.log('🔄 Starting drum loop at', this.bpm, 'BPM');
+        this.isLooping = true;
+        this.step = 0;
+        
+        const stepTime = (60 / this.bpm) * 1000 / 4; // 16th note timing
+        
+        this.loopInterval = setInterval(() => {
+            // Play drums based on pattern
+            if (this.pattern.kick[this.step]) {
+                this.playKick();
+            }
+            if (this.pattern.snare[this.step]) {
+                this.playSnare();
+            }
+            if (this.pattern.hihat[this.step] === 1) {
+                this.playHiHat(); // Closed hi-hat
+            } else if (this.pattern.hihat[this.step] === 2) {
+                this.drums.playHiHat(0.5, true); // Open hi-hat
+            }
+            if (this.pattern.cymbal && this.pattern.cymbal[this.step]) {
+                this.playCymbal();
+            }
+            
+            this.step = (this.step + 1) % 16;
+        }, stepTime);
+        
+        // Update button text
+        document.getElementById('drum-loop-toggle').textContent = '⏹️ Stop Loop';
+    }
+}
+
+// Initialize drum pad after DOM is ready
+let drumPad;
+
+// Drum pattern engine - generates beats based on blockchain data
+class DrumPatternEngine {
+    constructor(drumSynth) {
+        this.drums = drumSynth;
+        this.patterns = {
+            // Basic patterns by mood
+            happy: {
+                kick: [1, 0, 0, 1, 0, 1, 0, 0, 1, 0, 0, 1, 0, 1, 0, 0],
+                snare: [0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0],
+                hihat: [1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1],
+                openhat: [0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1]
+            },
+            sad: {
+                kick: [1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0],
+                snare: [0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0],
+                hihat: [0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1],
+                openhat: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0]
+            },
+            complex: {
+                kick: [1, 0, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0, 0, 1, 0, 0],
+                snare: [0, 0, 1, 0, 1, 0, 0, 1, 0, 0, 1, 0, 1, 0, 0, 1],
+                hihat: [1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0],
+                openhat: [0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0]
+            }
+        };
+        this.currentPattern = this.patterns.complex;
+        this.stepIndex = 0;
+        this.isPlaying = false;
+    }
+    
+    // Generate dynamic pattern from blockchain hex data
+    generatePatternFromHex(hexString) {
+        const bytes = [];
+        for (let i = 0; i < Math.min(hexString.length, 32); i += 2) {
+            bytes.push(parseInt(hexString.substr(i, 2), 16));
+        }
+        
+        // Generate kick pattern - use lower 4 bits
+        const kickPattern = bytes.slice(0, 16).map(byte => (byte & 0x0F) > (8 - drumComplexity * 6) ? 1 : 0);
+        
+        // Generate snare pattern - use middle bits
+        const snarePattern = bytes.slice(0, 16).map(byte => ((byte >> 2) & 0x0F) > (10 - drumComplexity * 4) ? 1 : 0);
+        
+        // Generate hi-hat pattern - use upper bits  
+        const hihatPattern = bytes.slice(0, 16).map(byte => ((byte >> 4) & 0x0F) > (6 - drumComplexity * 2) ? 1 : 0);
+        
+        // Generate open hi-hat pattern - sparse, use full byte value
+        const openhatPattern = bytes.slice(0, 16).map(byte => byte > (200 - drumComplexity * 50) ? 1 : 0);
+        
+        return {
+            kick: kickPattern,
+            snare: snarePattern,
+            hihat: hihatPattern,
+            openhat: openhatPattern
+        };
+    }
+    
+    // Play drum pattern step
+    playStep(pattern, stepIndex, beatDelay) {
+        if (!pattern || drumVolume <= 0) return;
+        
+        const step = stepIndex % 16;
+        const volume = drumVolume;
+        
+        timeout.push(setTimeout(() => {
+            if (pattern.kick[step]) {
+                this.drums.playKick(volume * 0.8);
+            }
+            if (pattern.snare[step]) {
+                this.drums.playSnare(volume * 0.6);
+            }
+            if (pattern.hihat[step] && !pattern.openhat[step]) {
+                this.drums.playHiHat(volume * 0.4, false);
+            }
+            if (pattern.openhat[step]) {
+                this.drums.playHiHat(volume * 0.5, true);
+            }
+            
+            // Occasional cymbal crashes based on mood and complexity
+            if (mood > 0.6 && drumComplexity > 0.7 && step === 0 && Math.random() < 0.3) {
+                this.drums.playCymbal(volume * 0.3);
+            }
+        }, beatDelay));
+    }
+    
+    // Generate and play drum sequence for transaction
+    playDrumSequence(hexString, totalDuration) {
+        console.log('🥁 Starting drum sequence - Volume:', drumVolume, 'Duration:', totalDuration);
+        if (drumVolume <= 0) {
+            console.log('🔇 Drums muted (volume = 0)');
+            return;
+        }
+        
+        // Generate pattern from blockchain data
+        const blockchainPattern = this.generatePatternFromHex(hexString);
+        console.log('🎵 Generated blockchain pattern:', blockchainPattern);
+        
+        // Mix with mood-based base pattern for musicality
+        let moodType = mood > 0.6 ? 'happy' : mood < 0.4 ? 'sad' : 'complex';
+        const basePattern = this.patterns[moodType];
+        
+        // Combine patterns based on drum complexity
+        const finalPattern = {
+            kick: blockchainPattern.kick.map((val, idx) => 
+                val || (drumComplexity < 0.3 ? 0 : basePattern.kick[idx])),
+            snare: blockchainPattern.snare.map((val, idx) => 
+                val || (drumComplexity < 0.5 ? 0 : basePattern.snare[idx])),
+            hihat: blockchainPattern.hihat.map((val, idx) => 
+                val || (drumComplexity < 0.2 ? 0 : basePattern.hihat[idx])),
+            openhat: blockchainPattern.openhat.map((val, idx) => 
+                val || (drumComplexity < 0.7 ? 0 : basePattern.openhat[idx]))
+        };
+        
+        // Calculate timing - 16th note timing based on tempo
+        const sixteenthNote = (60 / (120 * tempo)) * 1000 / 4; // 120 BPM base, adjusted by tempo
+        const totalSteps = Math.floor(totalDuration / sixteenthNote);
+        
+        console.log('⏱️ Drum timing - 16th note:', sixteenthNote, 'ms, Total steps:', totalSteps);
+        console.log('🎼 Final pattern (first 8 steps):', {
+            kick: finalPattern.kick.slice(0, 8),
+            snare: finalPattern.snare.slice(0, 8),
+            hihat: finalPattern.hihat.slice(0, 8)
+        });
+        
+        // Play drum sequence
+        for (let step = 0; step < totalSteps; step++) {
+            this.playStep(finalPattern, step, step * sixteenthNote);
+        }
+        
+        console.log('🚀 Scheduled', totalSteps, 'drum steps');
+    }
+}
+
+// Initialize drum pattern engine
+const drumEngine = new DrumPatternEngine(drums);
 
 function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
@@ -146,6 +806,47 @@ document.addEventListener('DOMContentLoaded', function () {
         delayAmount = parseFloat(delaySlider.value);
         updateSynthDelay();
     }
+    // Harmony slider setup
+    const harmonySlider = document.getElementById('harmony-slider');
+    const harmonyValue = document.getElementById('harmony-value');
+    if (harmonySlider && harmonyValue) {
+        harmonySlider.oninput = function () {
+            harmonyIntensity = parseFloat(this.value);
+            harmonyValue.textContent = harmonyIntensity.toFixed(2);
+        };
+        // Initialize value
+        harmonyValue.textContent = harmonySlider.value;
+        harmonyIntensity = parseFloat(harmonySlider.value);
+    }
+    // Drum volume slider setup
+    const drumVolumeSlider = document.getElementById('drum-volume-slider');
+    const drumVolumeValue = document.getElementById('drum-volume-value');
+    if (drumVolumeSlider && drumVolumeValue) {
+        drumVolumeSlider.oninput = function () {
+            drumVolume = parseFloat(this.value);
+            drumVolumeValue.textContent = drumVolume.toFixed(2);
+        };
+        // Initialize value
+        drumVolumeValue.textContent = drumVolumeSlider.value;
+        drumVolume = parseFloat(drumVolumeSlider.value);
+    }
+    // Drum complexity slider setup
+    const drumComplexitySlider = document.getElementById('drum-complexity-slider');
+    const drumComplexityValue = document.getElementById('drum-complexity-value');
+    if (drumComplexitySlider && drumComplexityValue) {
+        drumComplexitySlider.oninput = function () {
+            drumComplexity = parseFloat(this.value);
+            drumComplexityValue.textContent = drumComplexity.toFixed(2);
+        };
+        // Initialize value
+        drumComplexityValue.textContent = drumComplexitySlider.value;
+        drumComplexity = parseFloat(drumComplexitySlider.value);
+    }
+    
+    // Initialize drum pad
+    drumPad = new DrumPad(drums);
+    console.log('🥁 Drum pad initialized!');
+    
     // Fetch and display BTC price and set mood on load
     updateMoodFromPrice();
 });
@@ -229,18 +930,69 @@ async function playTransaction(index) {
 
         let prevNote = 60; // Start from middle C
 
-        // --- Melody Instrument ---
+        // --- Enhanced Melody Instrument with Advanced Harmonization ---
         function playMelodyNotes() {
             let melodyNotes = 8 + Math.floor(Math.random() * 8); // 8-16 notes
             let melodyBase = 60 + Math.floor(Math.random() * 12); // C4-B4
-            // Define major and minor scale intervals
+            
+            // Define scales and modes for more sophisticated harmonies
             const majorScale = [0, 2, 4, 5, 7, 9, 11];
             const minorScale = [0, 2, 3, 5, 7, 8, 10];
-            // Chord intervals for harmonization
-            const majorChord = [0, 4, 7]; // root, major third, fifth
-            const minorChord = [0, 3, 7]; // root, minor third, fifth
+            const dorianScale = [0, 2, 3, 5, 7, 9, 10];
+            const mixolydianScale = [0, 2, 4, 5, 7, 9, 10];
+            const pentatonicMajor = [0, 2, 4, 7, 9];
+            const pentatonicMinor = [0, 3, 5, 7, 10];
+            
+            // Advanced chord voicings and extensions
+            const chordLibrary = {
+                majorTriad: [0, 4, 7],
+                minorTriad: [0, 3, 7],
+                major7: [0, 4, 7, 11],
+                minor7: [0, 3, 7, 10],
+                dominant7: [0, 4, 7, 10],
+                major9: [0, 4, 7, 11, 14],
+                minor9: [0, 3, 7, 10, 14],
+                sus2: [0, 2, 7],
+                sus4: [0, 5, 7],
+                add9: [0, 4, 7, 14],
+                diminished: [0, 3, 6],
+                halfDiminished: [0, 3, 6, 10],
+                augmented: [0, 4, 8],
+                major6: [0, 4, 7, 9],
+                minor6: [0, 3, 7, 9],
+                eleventh: [0, 4, 7, 10, 14, 17],
+                thirteenth: [0, 4, 7, 10, 14, 17, 21]
+            };
+            
+            // Chord progression patterns based on mood
+            const progressionLibrary = {
+                happy: [
+                    ['majorTriad', 'major6', 'major9', 'major7'],
+                    ['majorTriad', 'add9', 'sus4', 'major6'],
+                    ['major9', 'sus2', 'major7', 'add9'],
+                    ['majorTriad', 'augmented', 'major6', 'major7']
+                ],
+                sad: [
+                    ['minorTriad', 'minor6', 'minor7', 'minor9'],
+                    ['minorTriad', 'diminished', 'halfDiminished', 'minor7'],
+                    ['minor9', 'minor6', 'halfDiminished', 'minorTriad'],
+                    ['minorTriad', 'sus2', 'minor7', 'minor6']
+                ],
+                complex: [
+                    ['major7', 'dominant7', 'minor9', 'major6'],
+                    ['minor7', 'halfDiminished', 'major9', 'sus4'],
+                    ['eleventh', 'major9', 'minor7', 'dominant7'],
+                    ['thirteenth', 'minor9', 'major7', 'sus2']
+                ]
+            };
+            
             // Get root midi from key
             const rootMidi = keyToMidi[key] || 60;
+            
+            // Select progression based on mood and complexity
+            let progressionType = mood > 0.7 ? 'happy' : mood < 0.3 ? 'sad' : 'complex';
+            let progression = progressionLibrary[progressionType][Math.floor(Math.random() * progressionLibrary[progressionType].length)];
+            let chordIndex = 0;
             for (let m = 0; m < melodyNotes; m++) {
                 let melodyDelay = m * (300 + Math.floor(Math.random() * (mood > 0.5 ? 350 : 600)));
                 // Pick a scale degree
@@ -284,19 +1036,82 @@ async function playTransaction(index) {
                     synth.setAmpReleaseTime(0.2);
                     let melAmp = 0.8 * (0.7 + Math.random() * 0.6); // Lowered amplitude for melody
                     synth.playNote(melodyNote, melAmp, 0.8, 0);
-                    // --- Harmonization ---
+                    // --- Advanced Multi-Voice Harmonization ---
+                    const currentChordName = progression[chordIndex % progression.length];
+                    const currentChord = chordLibrary[currentChordName];
+                    chordIndex = (chordIndex + (Math.random() < 0.3 ? 1 : 0)) % progression.length; // Sometimes advance chord
+                    
+                    // Voice leading and harmonic movement
                     const harmonies = [];
-                    let chord = mood > 0.5 ? majorChord : minorChord;
-                    if (Math.random() < 0.8) harmonies.push(chord[1]); // third
-                    if (Math.random() < 0.5) harmonies.push(chord[2]); // fifth
-                    if (Math.random() < 0.2) harmonies.push(12); // octave
-                    harmonies.forEach((interval, i) => {
+                    const voiceCount = Math.min(currentChord.length, 3 + Math.floor(Math.random() * 2)); // 3-4 voices
+                    
+                    // Add chord tones with voice leading
+                    for (let v = 0; v < voiceCount; v++) {
+                        if (Math.random() < (0.4 + harmonyIntensity * 0.5)) { // Controlled by harmony slider
+                            let interval = currentChord[v % currentChord.length];
+                            // Octave displacement for voice separation
+                            if (v > 0) interval += 12 * Math.floor(v / 3); // Spread voices across octaves
+                            harmonies.push({
+                                interval: interval,
+                                voice: v,
+                                delay: v * 15 + Math.random() * 10, // Slight voice staggering
+                                waveform: v % 3 // Different waveforms per voice
+                            });
+                        }
+                    }
+                    
+                    // Add passing tones and non-chord tones for complexity
+                    if (Math.random() < (0.2 + harmonyIntensity * 0.3)) { // Controlled by harmony slider
+                        const passingTone = currentChord[0] + (Math.random() < 0.5 ? 1 : -1); // Semitone approach
+                        harmonies.push({
+                            interval: passingTone,
+                            voice: 99, // Special voice for passing tones
+                            delay: 50 + Math.random() * 30,
+                            waveform: 0, // Sine for subtlety
+                            amplitude: 0.2 // Quieter
+                        });
+                    }
+                    
+                    // Play harmonized voices with advanced effects
+                    harmonies.forEach((harmony, i) => {
                         setTimeout(() => {
-                            let harmonyNote = melodyNote + interval;
-                            let harmonyAmp = melAmp * (0.35 + Math.random() * 0.2); // Lowered amplitude for harmonies
+                            let harmonyNote = melodyNote + harmony.interval;
+                            let harmonyAmp = (harmony.amplitude || (melAmp * (0.25 + Math.random() * 0.15))); // Varied amplitude
+                            
+                            // Save synth state
+                            let prevWave = synth.wave;
+                            let prevFilterCutoff = synth._filter.frequency.value;
+                            
+                            // Set voice-specific parameters
+                            synth.setOscWave(harmony.waveform); // Different waveforms per voice
+                            
+                            // Voice-specific filtering for separation
+                            if (harmony.voice < 2) {
+                                synth.setFilterCutoff(0.6 + harmony.voice * 0.1); // Higher voices brighter
+                            } else {
+                                synth.setFilterCutoff(0.4 - (harmony.voice - 2) * 0.05); // Lower voices darker
+                            }
+                            
                             synth.playNote(harmonyNote, harmonyAmp, 0.8, 0);
-                        }, 10 + i * 20);
+                            
+                            // Restore synth state
+                            synth.setOscWave(prevWave === 'sine' ? 0 : prevWave === 'square' ? 1 : prevWave === 'sawtooth' ? 2 : 3);
+                            synth.setFilterCutoff(prevFilterCutoff);
+                            
+                        }, harmony.delay);
                     });
+                    
+                    // Add harmonic resonance effect (sympathetic harmonics)
+                    if (Math.random() < (harmonyIntensity * 0.4)) { // Controlled by harmony slider
+                        setTimeout(() => {
+                            const resonantFreqs = [melodyNote + 19, melodyNote + 24, melodyNote + 28]; // Natural harmonics
+                            resonantFreqs.forEach((freq, idx) => {
+                                setTimeout(() => {
+                                    synth.playNote(freq, melAmp * 0.1 * (1 - idx * 0.3), 0.9, 0);
+                                }, idx * 10);
+                            });
+                        }, 80);
+                    }
                     // Restore config
                     synth.setOscWave(prevWave === 'sine' ? 0 : prevWave === 'square' ? 1 : prevWave === 'sawtooth' ? 2 : 3);
                     synth.setAmpAttackTime(prevAttack / 5);
@@ -307,6 +1122,94 @@ async function playTransaction(index) {
                 }, melodyDelay));
             }
         }
+        
+        // --- Bass Harmonization Layer ---
+        function playBassHarmonies() {
+            const bassNotes = 6 + Math.floor(Math.random() * 4); // 6-10 bass notes
+            const bassProgression = progression.slice(); // Copy melody progression
+            let bassChordIndex = 0;
+            
+            for (let b = 0; b < bassNotes; b++) {
+                let bassDelay = b * (600 + Math.floor(Math.random() * 400)); // Slower than melody
+                
+                timeout.push(setTimeout(() => {
+                    const currentBassChord = chordLibrary[bassProgression[bassChordIndex % bassProgression.length]];
+                    bassChordIndex++;
+                    
+                    // Play root and fifth in bass register
+                    const bassRoot = rootMidi - 12 + currentBassChord[0]; // One octave lower
+                    const bassFifth = bassRoot + (currentBassChord[2] || 7); // Fifth if available
+                    
+                    // Save/restore synth config for bass
+                    let prevWave = synth.wave;
+                    let prevAttack = synth._ampAttackTime;
+                    let prevRelease = synth._ampReleaseTime;
+                    
+                    // Set bass parameters
+                    synth.setOscWave(2); // Sawtooth for bass
+                    synth.setAmpAttackTime(0.1);
+                    synth.setAmpReleaseTime(0.6);
+                    synth.setFilterCutoff(0.25); // Dark bass tone
+                    
+                    // Play bass root
+                    synth.playNote(bassRoot, 0.4 + Math.random() * 0.2, 0.7, 0);
+                    
+                    // Play bass fifth with slight delay
+                    setTimeout(() => {
+                        synth.playNote(bassFifth, 0.25 + Math.random() * 0.15, 0.7, 0);
+                    }, 100 + Math.random() * 50);
+                    
+                    // Restore config
+                    synth.setOscWave(prevWave === 'sine' ? 0 : prevWave === 'square' ? 1 : prevWave === 'sawtooth' ? 2 : 3);
+                    synth.setAmpAttackTime(prevAttack / 5);
+                    synth.setAmpReleaseTime(prevRelease / 5);
+                    
+                }, bassDelay));
+            }
+        }
+        
+        // --- Atmospheric Pad Layer ---
+        function playAtmosphericPad() {
+            if (Math.random() < (harmonyIntensity * 0.8)) { // Controlled by harmony slider
+                const padDelay = 200 + Math.random() * 300;
+                
+                timeout.push(setTimeout(() => {
+                    const padChord = chordLibrary[progression[0]]; // Use first chord of progression
+                    const padRoot = rootMidi + 12; // Higher register
+                    
+                    // Save synth state
+                    let prevWave = synth.wave;
+                    let prevAttack = synth._ampAttackTime;
+                    let prevRelease = synth._ampReleaseTime;
+                    let prevFilterCutoff = synth._filter.frequency.value;
+                    
+                    // Set pad parameters
+                    synth.setOscWave(0); // Sine for smooth pad
+                    synth.setAmpAttackTime(0.8); // Slow attack
+                    synth.setAmpReleaseTime(2.0); // Long release
+                    synth.setFilterCutoff(0.35); // Soft filtering
+                    
+                    // Play pad chord tones with staggered timing
+                    padChord.slice(0, 4).forEach((interval, idx) => { // Max 4 voices
+                        setTimeout(() => {
+                            const padNote = padRoot + interval;
+                            const padAmp = 0.15 * (1 - idx * 0.1); // Decreasing amplitude
+                            synth.playNote(padNote, padAmp, 0.9, 0);
+                        }, idx * 200);
+                    });
+                    
+                    // Restore config after pad
+                    setTimeout(() => {
+                        synth.setOscWave(prevWave === 'sine' ? 0 : prevWave === 'square' ? 1 : prevWave === 'sawtooth' ? 2 : 3);
+                        synth.setAmpAttackTime(prevAttack / 5);
+                        synth.setAmpReleaseTime(prevRelease / 5);
+                        synth.setFilterCutoff(prevFilterCutoff);
+                    }, 1000);
+                    
+                }, padDelay));
+            }
+        }
+        
         // --- End Melody Instrument ---
 
         // Progress bar setup
@@ -367,6 +1270,21 @@ async function playTransaction(index) {
                 dynamicAmp *= 0.9 + Math.random() * 0.3; // 0.9x to 1.2x
             }
             playSound(midiNote, byteHex, 0, dynamicAmp, filterOffset);
+            
+            // --- Enhanced Ambient Harmonization ---
+            if (Math.random() < (harmonyIntensity * 0.5)) { // Controlled by harmony slider
+                const ambientIntervals = mood > 0.5 ? [4, 7, 12] : [3, 7, 10]; // Major/minor harmonies
+                ambientIntervals.forEach((interval, idx) => {
+                    if (Math.random() < 0.6) { // Probabilistic harmonies
+                        setTimeout(() => {
+                            const harmonyNote = midiNote + interval;
+                            const harmonyAmp = dynamicAmp * (0.3 - idx * 0.08); // Decreasing volume
+                            playSound(harmonyNote, byteHex, 0, harmonyAmp, filterOffset + 0.1);
+                        }, (idx + 1) * (20 + Math.random() * 15));
+                    }
+                });
+            }
+            
             // --- Extra dynamic: quick grace note (octave up or down) ---
             if (mood > 0.5 && Math.random() < 0.35) { // more grace notes
                 var graceNote = midiNote + (Math.random() < 0.5 ? 12 : -12);
@@ -375,6 +1293,19 @@ async function playTransaction(index) {
                         playSound(graceNote, byteHex, 0, dynamicAmp * 1.1, filterOffset);
                     }, 40 + Math.random() * 80); // quicker after main note
                 }
+            }
+            
+            // --- Harmonic Resonance for Ambient Layer ---
+            if (Math.random() < (harmonyIntensity * 0.25)) { // Controlled by harmony slider
+                setTimeout(() => {
+                    // Natural harmonic series
+                    const harmonicFreqs = [midiNote + 12, midiNote + 19, midiNote + 24];
+                    harmonicFreqs.forEach((freq, idx) => {
+                        setTimeout(() => {
+                            playSound(freq, byteHex, 0, dynamicAmp * 0.15 * (1 - idx * 0.3), filterOffset + 0.2);
+                        }, idx * 15);
+                    });
+                }, 60 + Math.random() * 40);
             }
             // --- More rhythmic and melodic variation when happy ---
             var nextDelay = delay;
@@ -393,6 +1324,18 @@ async function playTransaction(index) {
         }
         playNoteAt(0);
         playMelodyNotes();
+        playBassHarmonies();
+        playAtmosphericPad();
+        
+        // --- Add Transaction Drum Beat ---
+        if (drumPad && Math.random() < 0.7) { // 70% chance to auto-play transaction beat
+            console.log('🔗 Auto-starting transaction-based drum pattern');
+            // Small delay to let transaction display update
+            setTimeout(() => {
+                drumPad.startTransactionLoop(toplay);
+            }, 100);
+        }
+        
         updateNextButtonVisibility();
     } else {
         document.getElementById("txplaying").innerHTML = '';
@@ -458,6 +1401,13 @@ document.getElementById('next').onclick = function () {
     }
     setIndicator('playing');
     playNext()
+}
+
+document.getElementById('test-drums').onclick = function () {
+    if (context.state === 'suspended') {
+        context.resume();
+    }
+    testDrums();
 }
 
 document.body.onkeyup = function (e) {

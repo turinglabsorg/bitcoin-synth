@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Bitcoin Crazy Synth</title>
+    <title>Bitcoin Crazy Synth + Drums</title>
     <link rel="icon" type="image/png" href="bitcoin-pixelated.png" />
     <script src="https://unpkg.com/lodash@4.16.6"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -418,13 +418,34 @@
       .synth-knob[type="range"]:disabled {
         opacity: 0.5;
       }
+      
+      /* Drum Pad Styles */
+      .drum-pad:hover {
+        transform: scale(1.05);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+      }
+      
+      .drum-pad:active {
+        transform: scale(0.95);
+        box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+      }
+      
+      @media (max-width: 600px) {
+        .btcamp-drums {
+          padding: 0.5rem 1rem;
+        }
+        .drum-pad {
+          padding: 0.7rem !important;
+          font-size: 0.9rem !important;
+        }
+      }
     </style>
   </head>
   <body>
     <div class="btcamp-player">
       <div class="btcamp-header">
         <img src="bitcoin-pixelated.png" alt="Bitcoin Logo" />
-        Bitcoin Synth
+        Bitcoin Synth + Drums 🥁
       </div>
       <div
         class="btcamp-display"
@@ -448,6 +469,7 @@
       >
         <button id="playpause-indicator" class="btcamp-btn">▶️ Play</button>
         <button id="next" class="btcamp-btn">⏭️ Next</button>
+        <button id="test-drums" class="btcamp-btn">🥁 Test</button>
       </div>
       <div
         class="synth-controls-row"
@@ -532,15 +554,119 @@
             >
           </div>
         </div>
+        <div class="synth-control">
+          <input
+            type="range"
+            id="harmony-slider"
+            min="0"
+            max="1.0"
+            step="0.01"
+            value="0.8"
+            class="synth-knob vertical-knob"
+          />
+          <div class="synth-label">
+            <span style="color: #00ff80">Harmony</span><br /><span
+              id="harmony-value"
+              style="color: #00ff80"
+              >0.80</span
+            >
+          </div>
+        </div>
+      </div>
+      <div
+        class="synth-controls-row"
+        style="
+          display: flex;
+          flex-direction: row;
+          align-items: flex-end;
+          justify-content: center;
+          gap: 2.5em;
+          margin-bottom: 1.5em;
+          margin-top: 0.5em;
+        "
+      >
+        <div class="synth-control">
+          <input
+            type="range"
+            id="drum-volume-slider"
+            min="0"
+            max="1.0"
+            step="0.01"
+            value="0.6"
+            class="synth-knob vertical-knob"
+          />
+          <div class="synth-label">
+            <span style="color: #ff8000">Drums</span><br /><span
+              id="drum-volume-value"
+              style="color: #ff8000"
+              >0.60</span
+            >
+          </div>
+        </div>
+        <div class="synth-control">
+          <input
+            type="range"
+            id="drum-complexity-slider"
+            min="0"
+            max="1.0"
+            step="0.01"
+            value="0.5"
+            class="synth-knob vertical-knob"
+          />
+          <div class="synth-label">
+            <span style="color: #ff4080">Beats</span><br /><span
+              id="drum-complexity-value"
+              style="color: #ff4080"
+              >0.50</span
+            >
+          </div>
+        </div>
       </div>
       <div class="btcamp-info">
         <span id="info-label">Playing transaction:</span>
         <span id="info-value"></span>
       </div>
+      <div id="start-message" class="btcamp-info" style="text-align: center; color: #00ffea;">
+        Press Play to start listening to the blockchain!
+      </div>
       <div class="btcamp-raw" id="rawtx">
         Still need to be fetched, press play..
       </div>
       <div class="btcamp-nowplaying" id="nowplaying"></div>
+      
+      <!-- Drum Pad Section -->
+      <div class="btcamp-drums" style="background: #181c20; border-bottom: 2px solid #222; padding: 1rem 2rem;">
+        <div style="text-align: center; margin-bottom: 1rem;">
+          <h3 style="color: #ff8000; margin: 0; font-size: 1.2rem;">🥁 DRUM PAD 🥁</h3>
+        </div>
+        
+        <!-- Drum Buttons Grid -->
+        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; margin-bottom: 1rem; max-width: 400px; margin-left: auto; margin-right: auto;">
+          <button id="kick-pad" class="drum-pad" style="background: #ff4444; color: white; border: none; padding: 1rem; border-radius: 8px; font-size: 1.1rem; font-weight: bold; cursor: pointer; transition: all 0.1s;">
+            🔴 KICK
+          </button>
+          <button id="snare-pad" class="drum-pad" style="background: #44ff44; color: black; border: none; padding: 1rem; border-radius: 8px; font-size: 1.1rem; font-weight: bold; cursor: pointer; transition: all 0.1s;">
+            🟢 SNARE
+          </button>
+          <button id="hihat-pad" class="drum-pad" style="background: #4444ff; color: white; border: none; padding: 1rem; border-radius: 8px; font-size: 1.1rem; font-weight: bold; cursor: pointer; transition: all 0.1s;">
+            🔵 HI-HAT
+          </button>
+          <button id="cymbal-pad" class="drum-pad" style="background: #ffaa00; color: black; border: none; padding: 1rem; border-radius: 8px; font-size: 1.1rem; font-weight: bold; cursor: pointer; transition: all 0.1s;">
+            🟡 CYMBAL
+          </button>
+        </div>
+        
+        <!-- Loop Controls -->
+        <div style="text-align: center; margin-top: 1rem;">
+          <button id="drum-loop-toggle" class="btcamp-btn" style="margin-right: 0.5rem;">🔄 Start Loop</button>
+          <button id="transaction-drum-button" class="btcamp-btn" style="margin-right: 1rem; background: #ff6600; border-color: #ff6600;">🔗 TX Beat</button>
+          <br style="margin-bottom: 0.5rem;">
+          <span style="color: #ffaa00; font-size: 0.9rem;">BPM: </span>
+          <input type="range" id="drum-bpm" min="60" max="180" value="120" style="width: 100px; margin-left: 0.5rem;">
+          <span id="bpm-value" style="color: #ffaa00; margin-left: 0.5rem;">120</span>
+        </div>
+      </div>
+      
       <div class="btcamp-footer">
         <span
           >Crazy experiment by
