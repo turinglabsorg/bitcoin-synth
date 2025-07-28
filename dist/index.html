@@ -677,6 +677,109 @@
         border-top: 1px solid #444;
       }
 
+      /* Mobile-friendly drum composer */
+      @media (max-width: 768px) {
+        .drum-composer {
+          margin: 1rem 0;
+          padding: 0.5rem;
+        }
+
+        .composer-header {
+          font-size: 0.9rem;
+          margin-bottom: 0.5rem;
+        }
+
+        .drum-row {
+          padding: 0.3rem;
+          gap: 0.5rem;
+        }
+
+        .drum-label {
+          width: 60px;
+          font-size: 0.8rem;
+        }
+
+        .beat-grid {
+          gap: 1px;
+        }
+
+        .beat-button {
+          width: 20px;
+          height: 20px;
+          font-size: 0.5rem;
+          border-width: 1px;
+        }
+
+        .composer-controls {
+          flex-direction: row;
+          gap: 0.5rem;
+          align-items: center;
+          width: 100%;
+        }
+
+        .composer-controls .btcamp-btn {
+          padding: 0.5rem 1rem;
+          font-size: 0.9rem;
+          flex: 1;
+          width: 50%;
+        }
+
+        .drum-controls {
+          width: 100%;
+        }
+
+        .drum-controls .btcamp-btn {
+          width: 100%;
+          margin-bottom: 0.5rem;
+        }
+      }
+
+      @media (max-width: 480px) {
+        .drum-composer {
+          margin: 0.5rem 0;
+          padding: 0.3rem;
+        }
+
+        .drum-row {
+          padding: 0.2rem;
+          gap: 0.3rem;
+        }
+
+        .drum-label {
+          width: 50px;
+          font-size: 0.7rem;
+        }
+
+        .beat-button {
+          width: 18px;
+          height: 18px;
+          font-size: 0.4rem;
+        }
+
+        .composer-controls {
+          flex-direction: row;
+          gap: 0.3rem;
+          align-items: center;
+          width: 100%;
+        }
+
+        .composer-controls .btcamp-btn {
+          padding: 0.4rem 0.8rem;
+          font-size: 0.8rem;
+          flex: 1;
+          width: 50%;
+        }
+
+        .drum-controls {
+          width: 100%;
+        }
+
+        .drum-controls .btcamp-btn {
+          width: 100%;
+          margin-bottom: 0.5rem;
+        }
+      }
+
       /* Drum Pad Grid (keeping for backward compatibility) */
       .drum-pad-grid {
         display: grid;
