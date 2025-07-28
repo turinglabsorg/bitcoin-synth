@@ -15,9 +15,10 @@ var nextblock = ''
 let tempo = 1.0;
 let mood = 0.0;
 let key = 'C';
-let delayAmount = 0.7;
+let delayAmount = 0.25;
 let harmonyIntensity = 0.8;
 let drumVolume = 0.6;
+let synthVolume = 0.8;
 let drumComplexity = 0.5;
 const keyToMidi = { C: 60, D: 62, E: 64, F: 65, G: 67, A: 69, B: 71 };
 
@@ -26,173 +27,165 @@ class DrumSynth {
     constructor(audioContext) {
         this.context = audioContext;
     }
-    
+
     // Kick drum - low frequency sine wave with quick decay
     playKick(volume = 0.7) {
         try {
             if (this.context.state === 'suspended') {
                 this.context.resume();
             }
-            
+
             const osc = this.context.createOscillator();
             const gainNode = this.context.createGain();
             const filter = this.context.createBiquadFilter();
-            
+
             osc.type = 'sine';
             osc.frequency.setValueAtTime(80, this.context.currentTime); // Slightly higher for more punch
             osc.frequency.exponentialRampToValueAtTime(40, this.context.currentTime + 0.1);
-            
+
             filter.type = 'lowpass';
             filter.frequency.value = 200; // Higher cutoff for more presence
-            
+
             gainNode.gain.setValueAtTime(volume * 1.5, this.context.currentTime); // Louder
             gainNode.gain.exponentialRampToValueAtTime(0.01, this.context.currentTime + 0.4);
-            
+
             osc.connect(filter);
             filter.connect(gainNode);
             gainNode.connect(this.context.destination);
-            
+
             osc.start(this.context.currentTime);
             osc.stop(this.context.currentTime + 0.4);
-            
+
             console.log('🥁 Kick drum played at volume:', volume * 1.5);
         } catch (error) {
             console.error('❌ Kick drum error:', error);
         }
     }
-    
+
     // Snare drum - noise burst with bandpass filter
     playSnare(volume = 0.5) {
         try {
             if (this.context.state === 'suspended') {
                 this.context.resume();
             }
-            
+
             const bufferSize = this.context.sampleRate * 0.3;
             const buffer = this.context.createBuffer(1, bufferSize, this.context.sampleRate);
             const output = buffer.getChannelData(0);
-            
+
             // Generate white noise
             for (let i = 0; i < bufferSize; i++) {
                 output[i] = (Math.random() * 2 - 1);
             }
-            
+
             const source = this.context.createBufferSource();
             source.buffer = buffer;
-            
+
             const filter = this.context.createBiquadFilter();
             filter.type = 'bandpass';
             filter.frequency.value = 300; // Higher frequency for more snap
             filter.Q.value = 2; // More resonance
-            
+
             const gainNode = this.context.createGain();
-            gainNode.gain.setValueAtTime(volume * 2, this.context.currentTime); // Much louder
+            gainNode.gain.setValueAtTime(volume * 3.5, this.context.currentTime); // Much louder - increased from 2 to 3.5
             gainNode.gain.exponentialRampToValueAtTime(0.01, this.context.currentTime + 0.3);
-            
+
             source.connect(filter);
             filter.connect(gainNode);
             gainNode.connect(this.context.destination);
-            
+
             source.start(this.context.currentTime);
-            
-            console.log('🥁 Snare drum played at volume:', volume * 2);
+
+            console.log('🥁 Snare drum played at volume:', volume * 3.5);
         } catch (error) {
             console.error('❌ Snare drum error:', error);
         }
     }
-    
+
     // Hi-hat - high frequency noise burst
     playHiHat(volume = 0.3, open = false) {
         try {
             if (this.context.state === 'suspended') {
                 this.context.resume();
             }
-            
+
             const bufferSize = this.context.sampleRate * (open ? 0.3 : 0.1);
             const buffer = this.context.createBuffer(1, bufferSize, this.context.sampleRate);
             const output = buffer.getChannelData(0);
-            
+
             // Generate filtered noise
             for (let i = 0; i < bufferSize; i++) {
                 output[i] = (Math.random() * 2 - 1) * Math.exp(-i / bufferSize * 8);
             }
-            
+
             const source = this.context.createBufferSource();
             source.buffer = buffer;
-            
+
             const filter = this.context.createBiquadFilter();
             filter.type = 'highpass';
             filter.frequency.value = open ? 6000 : 8000; // Lower frequency for more audibility
-            
+
             const gainNode = this.context.createGain();
             gainNode.gain.setValueAtTime(volume * 2, this.context.currentTime); // Louder
             gainNode.gain.exponentialRampToValueAtTime(0.01, this.context.currentTime + (open ? 0.3 : 0.15));
-            
+
             source.connect(filter);
             filter.connect(gainNode);
             gainNode.connect(this.context.destination);
-            
+
             source.start(this.context.currentTime);
-            
+
             console.log('🥁 Hi-hat played:', open ? 'open' : 'closed', 'volume:', volume * 2);
         } catch (error) {
             console.error('❌ Hi-hat error:', error);
         }
     }
-    
-    // Cymbal - metallic crash sound
+
+    // Cymbal - warm, less noisy crash sound
     playCymbal(volume = 0.4) {
         const osc1 = this.context.createOscillator();
         const osc2 = this.context.createOscillator();
-        const osc3 = this.context.createOscillator();
         const gainNode = this.context.createGain();
         const filter = this.context.createBiquadFilter();
-        
-        osc1.type = 'square';
-        osc2.type = 'square';  
-        osc3.type = 'triangle';
-        
-        osc1.frequency.value = 400;
-        osc2.frequency.value = 800;
-        osc3.frequency.value = 1600;
-        
+        const lowpassFilter = this.context.createBiquadFilter();
+
+        // Use only two oscillators with warmer waveforms
+        osc1.type = 'sine';
+        osc2.type = 'triangle';
+
+        // Much lower frequencies for warmer sound
+        osc1.frequency.value = 200;
+        osc2.frequency.value = 400;
+
+        // Gentle highpass filter
         filter.type = 'highpass';
-        filter.frequency.value = 3000;
-        
-        gainNode.gain.setValueAtTime(volume, this.context.currentTime);
-        gainNode.gain.exponentialRampToValueAtTime(0.01, this.context.currentTime + 1.5);
-        
+        filter.frequency.value = 800;
+
+        // Strong lowpass filter to cut harsh highs
+        lowpassFilter.type = 'lowpass';
+        lowpassFilter.frequency.value = 2000;
+
+        // Softer gain envelope
+        gainNode.gain.setValueAtTime(volume * 0.4, this.context.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, this.context.currentTime + 0.8);
+
         osc1.connect(filter);
         osc2.connect(filter);
-        osc3.connect(filter);
-        filter.connect(gainNode);
+        filter.connect(lowpassFilter);
+        lowpassFilter.connect(gainNode);
         gainNode.connect(this.context.destination);
-        
+
         osc1.start(this.context.currentTime);
         osc2.start(this.context.currentTime);
-        osc3.start(this.context.currentTime);
-        osc1.stop(this.context.currentTime + 1.5);
-        osc2.stop(this.context.currentTime + 1.5);
-        osc3.stop(this.context.currentTime + 1.5);
+        osc1.stop(this.context.currentTime + 0.8);
+        osc2.stop(this.context.currentTime + 0.8);
     }
 }
 
 // Initialize drum synth
 const drums = new DrumSynth(context);
 
-// Test function for drums
-function testDrums() {
-    console.log('🎵 Testing drums...');
-    if (context.state === 'suspended') {
-        context.resume();
-    }
-    
-    drums.playKick(1.0);
-    setTimeout(() => drums.playSnare(1.0), 250);
-    setTimeout(() => drums.playHiHat(1.0, false), 500);
-    setTimeout(() => drums.playHiHat(1.0, true), 750);
-    setTimeout(() => drums.playCymbal(0.8), 1000);
-}
+
 
 // Standalone Drum Pad System
 class DrumPad {
@@ -202,103 +195,126 @@ class DrumPad {
         this.loopInterval = null;
         this.bpm = 120;
         this.step = 0;
-        
+
         // Basic 4/4 pattern
         this.pattern = {
             kick: [1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0],
             snare: [0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0],
             hihat: [1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0],
         };
-        
+
         this.setupEventListeners();
     }
-    
+
     setupEventListeners() {
-        // Individual drum pad buttons
-        document.getElementById('kick-pad').onclick = () => {
+        // Create beat grid buttons
+        this.createBeatGrid();
+
+        // Individual drum pad buttons (for backward compatibility)
+        const kickPad = document.getElementById('kick-pad');
+        const snarePad = document.getElementById('snare-pad');
+        const hihatPad = document.getElementById('hihat-pad');
+        const cymbalPad = document.getElementById('cymbal-pad');
+
+        if (kickPad) kickPad.onclick = () => {
             console.log('🔴 Kick pad pressed');
             this.playKick();
         };
-        
-        document.getElementById('snare-pad').onclick = () => {
+
+        if (snarePad) snarePad.onclick = () => {
             console.log('🟢 Snare pad pressed');
             this.playSnare();
         };
-        
-        document.getElementById('hihat-pad').onclick = () => {
+
+        if (hihatPad) hihatPad.onclick = () => {
             console.log('🔵 Hi-hat pad pressed');
             this.playHiHat();
         };
-        
-        document.getElementById('cymbal-pad').onclick = () => {
+
+        if (cymbalPad) cymbalPad.onclick = () => {
             console.log('🟡 Cymbal pad pressed');
             this.playCymbal();
         };
-        
+
         // Loop toggle button
         document.getElementById('drum-loop-toggle').onclick = () => {
             this.toggleLoop();
         };
-        
-        // Transaction drum button
-        document.getElementById('transaction-drum-button').onclick = () => {
-            console.log('🔗 Transaction drum button pressed');
-            this.playCurrentTransactionBeat();
-        };
-        
+
+
+
         // BPM slider
         const bpmSlider = document.getElementById('drum-bpm');
         const bpmValue = document.getElementById('bpm-value');
-        
-        bpmSlider.oninput = () => {
-            this.bpm = parseInt(bpmSlider.value);
-            bpmValue.textContent = this.bpm;
-            
-            // Restart loop if running to apply new BPM
-            if (this.isLooping) {
-                this.stopLoop();
-                this.startLoop();
-            }
+
+        if (bpmSlider && bpmValue) {
+            bpmSlider.oninput = () => {
+                this.bpm = parseInt(bpmSlider.value);
+                bpmValue.textContent = this.bpm;
+
+                // Restart loop if running to apply new BPM
+                if (this.isLooping) {
+                    this.stopLoop();
+                    this.startLoop();
+                }
+            };
+        }
+
+        // Composer controls
+        const clearPattern = document.getElementById('clear-pattern');
+        const randomPattern = document.getElementById('random-pattern');
+        const txFillPattern = document.getElementById('tx-fill-pattern');
+
+        if (clearPattern) clearPattern.onclick = () => {
+            this.clearPattern();
+        };
+
+        if (randomPattern) randomPattern.onclick = () => {
+            this.generateRandomPattern();
+        };
+
+        if (txFillPattern) txFillPattern.onclick = () => {
+            this.applyTransactionFills();
         };
     }
-    
+
     playKick() {
         if (context.state === 'suspended') {
             context.resume();
         }
-        this.drums.playKick(0.8);
+        this.drums.playKick(0.8 * drumVolume);
     }
-    
+
     playSnare() {
         if (context.state === 'suspended') {
             context.resume();
         }
-        this.drums.playSnare(0.7);
+        this.drums.playSnare(0.7 * drumVolume);
     }
-    
+
     playHiHat() {
         if (context.state === 'suspended') {
             context.resume();
         }
-        this.drums.playHiHat(0.5, false);
+        this.drums.playHiHat(0.5 * drumVolume, false);
     }
-    
+
     playCymbal() {
         if (context.state === 'suspended') {
             context.resume();
         }
-        this.drums.playCymbal(0.6);
+        this.drums.playCymbal(0.4 * drumVolume); // Reduced from 0.6 to 0.4
     }
-    
+
     startLoop() {
         if (this.isLooping) return;
-        
+
         console.log('🔄 Starting drum loop at', this.bpm, 'BPM');
         this.isLooping = true;
         this.step = 0;
-        
+
         const stepTime = (60 / this.bpm) * 1000 / 4; // 16th note timing
-        
+
         this.loopInterval = setInterval(() => {
             // Play drums based on pattern
             if (this.pattern.kick[this.step]) {
@@ -310,29 +326,31 @@ class DrumPad {
             if (this.pattern.hihat[this.step]) {
                 this.playHiHat();
             }
-            
+
             this.step = (this.step + 1) % 16;
         }, stepTime);
-        
+
         // Update button text
         document.getElementById('drum-loop-toggle').textContent = '⏹️ Stop Loop';
     }
-    
+
     stopLoop() {
         if (!this.isLooping) return;
-        
+
         console.log('⏹️ Stopping drum loop');
         this.isLooping = false;
-        
+
         if (this.loopInterval) {
             clearInterval(this.loopInterval);
             this.loopInterval = null;
         }
-        
+
         // Update button text
         document.getElementById('drum-loop-toggle').textContent = '🔄 Start Loop';
+
+
     }
-    
+
     toggleLoop() {
         if (this.isLooping) {
             this.stopLoop();
@@ -340,11 +358,11 @@ class DrumPad {
             this.startLoop();
         }
     }
-    
+
     // Generate drum pattern from transaction hex data
     generatePatternFromTransaction(hexString) {
         console.log('🔍 Generating pattern from transaction hex:', hexString.substring(0, 64) + '...');
-        
+
         // Initialize empty 16-step patterns
         const pattern = {
             kick: new Array(16).fill(0),
@@ -352,168 +370,330 @@ class DrumPad {
             hihat: new Array(16).fill(0),
             cymbal: new Array(16).fill(0)
         };
-        
-        // Create a hash-like distribution from hex data for more balanced patterns
-        let hexDistribution = {};
-        for (let i = 0; i < Math.min(hexString.length, 128); i++) {
-            const char = hexString[i];
-            hexDistribution[char] = (hexDistribution[char] || 0) + 1;
+
+        // Extract transaction bytes for fills
+        const txBytes = [];
+        for (let i = 0; i < Math.min(hexString.length, 128); i += 2) {
+            txBytes.push(parseInt(hexString.substr(i, 2), 16));
         }
-        
-        console.log('📊 Hex distribution:', hexDistribution);
-        
-        // Enhanced mapping system - use combinations and byte values for variety
-        for (let i = 0; i < Math.min(hexString.length, 64); i += 4) {
-            const chunk = hexString.substr(i, 4); // Get 4-char chunks (2 bytes)
-            if (chunk.length < 4) continue;
-            
-            const byte1 = parseInt(chunk.substr(0, 2), 16);
-            const byte2 = parseInt(chunk.substr(2, 2), 16);
-            const step = Math.floor(i / 4) % 16;
-            
-            // Use byte value ranges for more balanced distribution
-            const combinedValue = (byte1 + byte2) % 256;
-            
-            // Musical drum placement based on combined byte values
-            // KICK DRUM: Use specific ranges and patterns to avoid too many zeros
-            if ((combinedValue % 16) < 4 && (step % 4 === 0 || step % 4 === 2)) {
-                pattern.kick[step] = 1;
-                console.log(`🔴 Kick at step ${step} (bytes: ${byte1}+${byte2}=${combinedValue})`);
-            } else if (combinedValue % 32 < 3 && step % 8 === 6) {
-                // Syncopated kicks
-                pattern.kick[step] = 1;
-                console.log(`🔴 Synco kick at step ${step} (${combinedValue})`);
-            }
-            
-            // SNARE DRUM: Classic backbeat positions with variations
-            if ((step === 4 || step === 12) && combinedValue % 8 < 6) {
-                // Main backbeat
-                pattern.snare[step] = 1;
-                console.log(`🟢 Backbeat snare at step ${step} (${combinedValue})`);
-            } else if ((combinedValue % 12) < 3 && (step === 6 || step === 14 || step === 10)) {
-                // Fill snares
-                pattern.snare[step] = 1;
-                console.log(`🟢 Fill snare at step ${step} (${combinedValue})`);
-            }
-            
-            // HI-HAT: Consistent rhythm with variations
-            if (combinedValue % 4 < 3) {
-                // Regular hi-hat pattern
-                if (step % 2 === 0) {
-                    pattern.hihat[step] = 1; // Closed
-                    console.log(`🔵 Closed hi-hat at step ${step} (${combinedValue})`);
-                } else if (combinedValue % 8 < 2) {
-                    pattern.hihat[step] = 2; // Open
-                    console.log(`🔵 Open hi-hat at step ${step} (${combinedValue})`);
-                }
-            }
-            
-            // CYMBAL: Rare accents
-            if (combinedValue % 64 < 2 && step % 16 === 0) {
-                pattern.cymbal[step] = 1;
-                console.log(`🟡 Cymbal crash at step ${step} (${combinedValue})`);
-            }
-            
-            // ADDITIONAL COMPLEXITY: Use specific hex patterns for special fills
-            const hexSum = chunk.split('').reduce((sum, char) => sum + parseInt(char, 16), 0);
-            
-            if (hexSum > 40) { // High hex sum = complex fill
-                console.log(`🎯 Complex fill detected (sum: ${hexSum}) at step ${step}`);
-                // Add some extra complexity
-                if (step % 8 === 7) {
-                    pattern.kick[(step + 1) % 16] = 1;
-                    pattern.snare[(step + 2) % 16] = 1;
-                    console.log(`🎵 Added fill pattern at steps ${(step+1)%16}, ${(step+2)%16}`);
-                }
-            }
-            
-            // Use specific hex characters for guaranteed variety
-            if (chunk.includes('f') || chunk.includes('e') || chunk.includes('d')) {
-                // High hex values = more hi-hat activity
-                pattern.hihat[(step + 1) % 16] = Math.random() < 0.7 ? 1 : 2;
-                console.log(`🔵 Hex accent hi-hat at step ${(step+1)%16} (${chunk})`);
-            }
-            
-            if (chunk.includes('8') || chunk.includes('9') || chunk.includes('a')) {
-                // Mid hex values = potential snare accents
-                if (step % 4 === 1 && Math.random() < 0.4) {
-                    pattern.snare[step] = 1;
-                    console.log(`🟢 Hex accent snare at step ${step} (${chunk})`);
-                }
-            }
-        }
-        
-        // Ensure minimum musical elements (prevent empty patterns)
-        let kickCount = pattern.kick.reduce((a, b) => a + b, 0);
-        let snareCount = pattern.snare.reduce((a, b) => a + b, 0);
-        
-        if (kickCount === 0) {
-            pattern.kick[0] = 1;
-            pattern.kick[8] = 1;
-            console.log('🔴 Added default kick pattern');
-        }
-        
-        if (snareCount === 0) {
-            pattern.snare[4] = 1;
-            pattern.snare[12] = 1;
-            console.log('🟢 Added default snare pattern');
-        }
-        
-        console.log('🎵 Generated transaction pattern:');
+
+        // Create basic musical patterns
+        const basicPatterns = {
+            // Basic 4/4 patterns
+            kick: [1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0],
+            snare: [0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0],
+            hihat: [1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0],
+            cymbal: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+        };
+
+        // Copy basic patterns
+        pattern.kick = [...basicPatterns.kick];
+        pattern.snare = [...basicPatterns.snare];
+        pattern.hihat = [...basicPatterns.hihat];
+        pattern.cymbal = [...basicPatterns.cymbal];
+
+        // Add transaction-based fills
+        const fills = this.generateTransactionFills(txBytes);
+        fills.forEach(fill => {
+            if (fill.type === 'kick') pattern.kick[fill.step] = 1;
+            else if (fill.type === 'snare') pattern.snare[fill.step] = 1;
+            else if (fill.type === 'hihat') pattern.hihat[fill.step] = fill.open ? 2 : 1;
+            else if (fill.type === 'cymbal') pattern.cymbal[fill.step] = 1;
+        });
+
+        console.log('🎵 Generated pattern with transaction fills:');
         console.log('Kick:  ', pattern.kick.join(''));
         console.log('Snare: ', pattern.snare.join(''));
         console.log('Hi-hat:', pattern.hihat.join(''));
         console.log('Cymbal:', pattern.cymbal.join(''));
-        
+
         return pattern;
     }
-    
+
+    // Generate fills based on transaction data
+    generateTransactionFills(txBytes) {
+        const fills = [];
+
+        // Analyze transaction characteristics
+        const avgByte = txBytes.reduce((a, b) => a + b, 0) / txBytes.length;
+        const byteVariance = txBytes.reduce((sum, byte) => sum + Math.pow(byte - avgByte, 2), 0) / txBytes.length;
+        const entropy = Math.sqrt(byteVariance) / 255;
+
+        console.log('🎲 Transaction analysis for fills:', { avgByte, entropy, byteCount: txBytes.length });
+
+        // Generate fills based on transaction characteristics
+        for (let i = 0; i < txBytes.length; i += 4) {
+            const chunk = txBytes.slice(i, i + 4);
+            if (chunk.length === 4) {
+                const chunkSum = chunk.reduce((a, b) => a + b, 0);
+                const fillStep = i % 16;
+
+                // High intensity chunks create fills
+                if (chunkSum > 600) { // High average
+                    fills.push({
+                        step: fillStep,
+                        type: 'kick',
+                        intensity: chunkSum / (4 * 255)
+                    });
+
+                    if (chunk[1] > 128) {
+                        fills.push({
+                            step: (fillStep + 1) % 16,
+                            type: 'snare',
+                            intensity: chunk[1] / 255
+                        });
+                    }
+                }
+
+                // High variance chunks create syncopated fills
+                const chunkVariance = chunk.reduce((sum, byte) => sum + Math.pow(byte - chunkSum / 4, 2), 0) / 4;
+                if (chunkVariance > 2000) {
+                    const syncopatedStep = (fillStep + 2) % 16;
+                    fills.push({
+                        step: syncopatedStep,
+                        type: 'hihat',
+                        open: chunk[2] > 128,
+                        intensity: chunkVariance / 10000
+                    });
+                }
+
+                // Very high bytes create cymbal accents
+                if (chunk.some(byte => byte > 240)) {
+                    fills.push({
+                        step: fillStep,
+                        type: 'cymbal',
+                        intensity: Math.max(...chunk) / 255
+                    });
+                }
+            }
+        }
+
+        // Add entropy-based random fills
+        if (entropy > 0.5) {
+            const randomFills = Math.floor(entropy * 4);
+            for (let i = 0; i < randomFills; i++) {
+                const step = txBytes[i % txBytes.length] % 16;
+                const drumType = txBytes[i % txBytes.length] % 4;
+
+                fills.push({
+                    step: step,
+                    type: ['kick', 'snare', 'hihat', 'cymbal'][drumType],
+                    open: drumType === 2 && txBytes[i % txBytes.length] > 128,
+                    intensity: txBytes[i % txBytes.length] / 255
+                });
+            }
+        }
+
+        console.log('🥁 Generated', fills.length, 'transaction fills');
+        return fills;
+    }
+
+    // Create beat grid buttons
+    createBeatGrid() {
+        const drumTypes = ['kick', 'snare', 'hihat', 'cymbal'];
+
+        drumTypes.forEach(drumType => {
+            const grid = document.getElementById(`${drumType}-grid`);
+            if (!grid) return;
+
+            grid.innerHTML = '';
+
+            for (let i = 0; i < 16; i++) {
+                const button = document.createElement('button');
+                button.className = 'beat-button';
+                button.dataset.step = i;
+                button.dataset.drum = drumType;
+                button.textContent = (i + 1) % 4 === 0 ? '|' : '';
+
+                button.onclick = () => {
+                    this.toggleBeat(drumType, i);
+                };
+
+                grid.appendChild(button);
+            }
+        });
+    }
+
+    // Toggle beat on/off
+    toggleBeat(drumType, step) {
+        const button = document.querySelector(`[data-drum="${drumType}"][data-step="${step}"]`);
+        if (!button) return;
+
+        const isActive = button.classList.contains('active');
+
+        if (isActive) {
+            button.classList.remove('active');
+            this.pattern[drumType][step] = 0;
+        } else {
+            button.classList.add('active', drumType);
+            this.pattern[drumType][step] = drumType === 'hihat' ? 1 : 1;
+        }
+
+        console.log(`🎵 ${drumType} ${isActive ? 'removed' : 'added'} at step ${step}`);
+    }
+
+    // Clear pattern
+    clearPattern() {
+        this.pattern = {
+            kick: new Array(16).fill(0),
+            snare: new Array(16).fill(0),
+            hihat: new Array(16).fill(0),
+            cymbal: new Array(16).fill(0)
+        };
+
+        // Clear all buttons
+        document.querySelectorAll('.beat-button').forEach(button => {
+            button.classList.remove('active', 'kick', 'snare', 'hihat', 'cymbal');
+        });
+
+        console.log('🗑️ Pattern cleared');
+    }
+
+    // Generate random pattern
+    generateRandomPattern() {
+        this.clearPattern();
+
+        const drumTypes = ['kick', 'snare', 'hihat', 'cymbal'];
+
+        drumTypes.forEach(drumType => {
+            for (let i = 0; i < 16; i++) {
+                if (Math.random() < 0.3) { // 30% chance for each beat
+                    this.pattern[drumType][i] = 1;
+                    const button = document.querySelector(`[data-drum="${drumType}"][data-step="${i}"]`);
+                    if (button) {
+                        button.classList.add('active', drumType);
+                    }
+                }
+            }
+        });
+
+        // Ensure basic musical structure
+        this.pattern.kick[0] = 1;
+        this.pattern.kick[8] = 1;
+        this.pattern.snare[4] = 1;
+        this.pattern.snare[12] = 1;
+
+        // Update buttons for basic structure
+        [0, 8].forEach(step => {
+            const button = document.querySelector(`[data-drum="kick"][data-step="${step}"]`);
+            if (button) button.classList.add('active', 'kick');
+        });
+
+        [4, 12].forEach(step => {
+            const button = document.querySelector(`[data-drum="snare"][data-step="${step}"]`);
+            if (button) button.classList.add('active', 'snare');
+        });
+
+        console.log('🎲 Random pattern generated');
+    }
+
+    // Apply transaction fills to current pattern
+    applyTransactionFills() {
+        const rawTxElement = document.getElementById('rawtx');
+        if (!rawTxElement || !rawTxElement.textContent) {
+            console.log('⚠️ No transaction data available for fills');
+            return;
+        }
+
+        const hexString = rawTxElement.textContent.trim();
+        if (hexString.length < 10 || hexString === 'Still need to be fetched, press play..') {
+            console.log('⚠️ No valid transaction hex available');
+            return;
+        }
+
+        // First, clear the pattern
+        this.clearPattern();
+
+        // Extract transaction bytes
+        const txBytes = [];
+        for (let i = 0; i < Math.min(hexString.length, 128); i += 2) {
+            txBytes.push(parseInt(hexString.substr(i, 2), 16));
+        }
+
+        // Generate fills
+        const fills = this.generateTransactionFills(txBytes);
+
+        // Apply fills to pattern and buttons
+        fills.forEach(fill => {
+            this.pattern[fill.type][fill.step] = fill.type === 'hihat' ? (fill.open ? 2 : 1) : 1;
+
+            const button = document.querySelector(`[data-drum="${fill.type}"][data-step="${fill.step}"]`);
+            if (button) {
+                button.classList.add('active', fill.type);
+            }
+        });
+
+        console.log('🔗 Applied', fills.length, 'transaction fills to pattern');
+    }
+
+    // Update pattern from composer
+    updatePatternFromComposer() {
+        const drumTypes = ['kick', 'snare', 'hihat', 'cymbal'];
+
+        drumTypes.forEach(drumType => {
+            for (let i = 0; i < 16; i++) {
+                const button = document.querySelector(`[data-drum="${drumType}"][data-step="${i}"]`);
+                if (button && button.classList.contains('active')) {
+                    this.pattern[drumType][i] = drumType === 'hihat' ? 1 : 1;
+                } else {
+                    this.pattern[drumType][i] = 0;
+                }
+            }
+        });
+    }
+
+    // Update composer buttons from pattern
+    updateComposerFromPattern() {
+        const drumTypes = ['kick', 'snare', 'hihat', 'cymbal'];
+
+        // Clear all buttons first
+        document.querySelectorAll('.beat-button').forEach(button => {
+            button.classList.remove('active', 'kick', 'snare', 'hihat', 'cymbal');
+        });
+
+        // Update buttons based on pattern
+        drumTypes.forEach(drumType => {
+            for (let i = 0; i < 16; i++) {
+                if (this.pattern[drumType][i] > 0) {
+                    const button = document.querySelector(`[data-drum="${drumType}"][data-step="${i}"]`);
+                    if (button) {
+                        button.classList.add('active', drumType);
+                    }
+                }
+            }
+        });
+    }
+
     // Start loop with transaction-based pattern
     startTransactionLoop(hexString) {
-        if (this.isLooping) {
-            this.stopLoop();
-        }
-        
         // Generate pattern from transaction
         this.pattern = this.generatePatternFromTransaction(hexString);
-        
-        // Start the loop
-        this.startLoop();
-    }
-    
-    // Play beat based on current displayed transaction
-    playCurrentTransactionBeat() {
-        // Get the raw transaction hex from the display
-        const rawTxElement = document.getElementById('rawtx');
-        if (rawTxElement && rawTxElement.textContent) {
-            const hexString = rawTxElement.textContent.trim();
-            if (hexString.length > 10 && hexString !== 'Still need to be fetched, press play..') {
-                console.log('🔗 Playing beat for current transaction');
-                this.startTransactionLoop(hexString);
-            } else {
-                console.log('⚠️ No transaction hex available, using demo pattern');
-                // Use demo hex for testing
-                const demoHex = '0123456789abcdef0123456789abcdef';
-                this.startTransactionLoop(demoHex);
-            }
-        } else {
-            console.log('⚠️ No transaction element found, using demo pattern');
-            // Use demo hex for testing
-            const demoHex = '0123456789abcdef0123456789abcdef';
-            this.startTransactionLoop(demoHex);
+
+        // Update composer buttons to reflect the pattern
+        this.updateComposerFromPattern();
+
+        // If loop is not running, start it
+        if (!this.isLooping) {
+            this.startLoop();
         }
+
+
+
+        console.log('🔗 Switched to transaction-based pattern');
     }
-    
+
+
+
     // Updated loop function to handle open hi-hats and cymbals
     startLoop() {
         if (this.isLooping) return;
-        
+
         console.log('🔄 Starting drum loop at', this.bpm, 'BPM');
         this.isLooping = true;
         this.step = 0;
-        
+
         const stepTime = (60 / this.bpm) * 1000 / 4; // 16th note timing
-        
+
         this.loopInterval = setInterval(() => {
             // Play drums based on pattern
             if (this.pattern.kick[this.step]) {
@@ -525,15 +705,15 @@ class DrumPad {
             if (this.pattern.hihat[this.step] === 1) {
                 this.playHiHat(); // Closed hi-hat
             } else if (this.pattern.hihat[this.step] === 2) {
-                this.drums.playHiHat(0.5, true); // Open hi-hat
+                this.drums.playHiHat(0.5 * drumVolume, true); // Open hi-hat
             }
             if (this.pattern.cymbal && this.pattern.cymbal[this.step]) {
                 this.playCymbal();
             }
-            
+
             this.step = (this.step + 1) % 16;
         }, stepTime);
-        
+
         // Update button text
         document.getElementById('drum-loop-toggle').textContent = '⏹️ Stop Loop';
     }
@@ -571,26 +751,26 @@ class DrumPatternEngine {
         this.stepIndex = 0;
         this.isPlaying = false;
     }
-    
+
     // Generate dynamic pattern from blockchain hex data
     generatePatternFromHex(hexString) {
         const bytes = [];
         for (let i = 0; i < Math.min(hexString.length, 32); i += 2) {
             bytes.push(parseInt(hexString.substr(i, 2), 16));
         }
-        
+
         // Generate kick pattern - use lower 4 bits
         const kickPattern = bytes.slice(0, 16).map(byte => (byte & 0x0F) > (8 - drumComplexity * 6) ? 1 : 0);
-        
+
         // Generate snare pattern - use middle bits
         const snarePattern = bytes.slice(0, 16).map(byte => ((byte >> 2) & 0x0F) > (10 - drumComplexity * 4) ? 1 : 0);
-        
+
         // Generate hi-hat pattern - use upper bits  
         const hihatPattern = bytes.slice(0, 16).map(byte => ((byte >> 4) & 0x0F) > (6 - drumComplexity * 2) ? 1 : 0);
-        
+
         // Generate open hi-hat pattern - sparse, use full byte value
         const openhatPattern = bytes.slice(0, 16).map(byte => byte > (200 - drumComplexity * 50) ? 1 : 0);
-        
+
         return {
             kick: kickPattern,
             snare: snarePattern,
@@ -598,14 +778,14 @@ class DrumPatternEngine {
             openhat: openhatPattern
         };
     }
-    
+
     // Play drum pattern step
     playStep(pattern, stepIndex, beatDelay) {
         if (!pattern || drumVolume <= 0) return;
-        
+
         const step = stepIndex % 16;
         const volume = drumVolume;
-        
+
         timeout.push(setTimeout(() => {
             if (pattern.kick[step]) {
                 this.drums.playKick(volume * 0.8);
@@ -619,14 +799,14 @@ class DrumPatternEngine {
             if (pattern.openhat[step]) {
                 this.drums.playHiHat(volume * 0.5, true);
             }
-            
+
             // Occasional cymbal crashes based on mood and complexity
             if (mood > 0.6 && drumComplexity > 0.7 && step === 0 && Math.random() < 0.3) {
                 this.drums.playCymbal(volume * 0.3);
             }
         }, beatDelay));
     }
-    
+
     // Generate and play drum sequence for transaction
     playDrumSequence(hexString, totalDuration) {
         console.log('🥁 Starting drum sequence - Volume:', drumVolume, 'Duration:', totalDuration);
@@ -634,43 +814,43 @@ class DrumPatternEngine {
             console.log('🔇 Drums muted (volume = 0)');
             return;
         }
-        
+
         // Generate pattern from blockchain data
         const blockchainPattern = this.generatePatternFromHex(hexString);
         console.log('🎵 Generated blockchain pattern:', blockchainPattern);
-        
+
         // Mix with mood-based base pattern for musicality
         let moodType = mood > 0.6 ? 'happy' : mood < 0.4 ? 'sad' : 'complex';
         const basePattern = this.patterns[moodType];
-        
+
         // Combine patterns based on drum complexity
         const finalPattern = {
-            kick: blockchainPattern.kick.map((val, idx) => 
+            kick: blockchainPattern.kick.map((val, idx) =>
                 val || (drumComplexity < 0.3 ? 0 : basePattern.kick[idx])),
-            snare: blockchainPattern.snare.map((val, idx) => 
+            snare: blockchainPattern.snare.map((val, idx) =>
                 val || (drumComplexity < 0.5 ? 0 : basePattern.snare[idx])),
-            hihat: blockchainPattern.hihat.map((val, idx) => 
+            hihat: blockchainPattern.hihat.map((val, idx) =>
                 val || (drumComplexity < 0.2 ? 0 : basePattern.hihat[idx])),
-            openhat: blockchainPattern.openhat.map((val, idx) => 
+            openhat: blockchainPattern.openhat.map((val, idx) =>
                 val || (drumComplexity < 0.7 ? 0 : basePattern.openhat[idx]))
         };
-        
+
         // Calculate timing - 16th note timing based on tempo
         const sixteenthNote = (60 / (120 * tempo)) * 1000 / 4; // 120 BPM base, adjusted by tempo
         const totalSteps = Math.floor(totalDuration / sixteenthNote);
-        
+
         console.log('⏱️ Drum timing - 16th note:', sixteenthNote, 'ms, Total steps:', totalSteps);
         console.log('🎼 Final pattern (first 8 steps):', {
             kick: finalPattern.kick.slice(0, 8),
             snare: finalPattern.snare.slice(0, 8),
             hihat: finalPattern.hihat.slice(0, 8)
         });
-        
+
         // Play drum sequence
         for (let step = 0; step < totalSteps; step++) {
             this.playStep(finalPattern, step, step * sixteenthNote);
         }
-        
+
         console.log('🚀 Scheduled', totalSteps, 'drum steps');
     }
 }
@@ -687,9 +867,18 @@ function playSound(note, byte, time, amplitude, filterOffset) {
         if (context.state === 'suspended') {
             context.resume();
         }
+
+        // Skip playing if synth volume is 0
+        if (synthVolume <= 0) {
+            return;
+        }
+
         // Ensure parameters are finite
         amplitude = Math.min(0.8, Math.max(0.3, amplitude));
         filterOffset = Math.min(0.9, Math.max(0.4, filterOffset));
+
+        // Apply synth volume
+        amplitude = amplitude * synthVolume;
 
         // Log note for debugging
         try {
@@ -818,6 +1007,20 @@ document.addEventListener('DOMContentLoaded', function () {
         harmonyValue.textContent = harmonySlider.value;
         harmonyIntensity = parseFloat(harmonySlider.value);
     }
+
+    // Synth volume slider setup
+    const synthVolumeSlider = document.getElementById('synth-volume-slider');
+    const synthVolumeValue = document.getElementById('synth-volume-value');
+    if (synthVolumeSlider && synthVolumeValue) {
+        synthVolumeSlider.oninput = function () {
+            synthVolume = parseFloat(this.value);
+            synthVolumeValue.textContent = synthVolume.toFixed(2);
+        };
+        // Initialize value
+        synthVolumeValue.textContent = synthVolumeSlider.value;
+        synthVolume = parseFloat(synthVolumeSlider.value);
+    }
+
     // Drum volume slider setup
     const drumVolumeSlider = document.getElementById('drum-volume-slider');
     const drumVolumeValue = document.getElementById('drum-volume-value');
@@ -830,23 +1033,12 @@ document.addEventListener('DOMContentLoaded', function () {
         drumVolumeValue.textContent = drumVolumeSlider.value;
         drumVolume = parseFloat(drumVolumeSlider.value);
     }
-    // Drum complexity slider setup
-    const drumComplexitySlider = document.getElementById('drum-complexity-slider');
-    const drumComplexityValue = document.getElementById('drum-complexity-value');
-    if (drumComplexitySlider && drumComplexityValue) {
-        drumComplexitySlider.oninput = function () {
-            drumComplexity = parseFloat(this.value);
-            drumComplexityValue.textContent = drumComplexity.toFixed(2);
-        };
-        // Initialize value
-        drumComplexityValue.textContent = drumComplexitySlider.value;
-        drumComplexity = parseFloat(drumComplexitySlider.value);
-    }
-    
+
+
     // Initialize drum pad
     drumPad = new DrumPad(drums);
     console.log('🥁 Drum pad initialized!');
-    
+
     // Fetch and display BTC price and set mood on load
     updateMoodFromPrice();
 });
@@ -915,9 +1107,7 @@ async function playTransaction(index) {
         }
         document.getElementById("txplaying").innerHTML = 'Playing TXID<br><a target="_blank" href="https://mempool.space/tx/' + txns[parseInt(index)] + '/">' + txns[parseInt(index)].substring(0, 25) + '...</a>' + blockRef;
         document.getElementById("rawtx").innerHTML = toplay;
-        document.getElementsByClassName('btcamp-btn-row')[0].style.marginTop = '0rem';
         updateVisibility();
-        document.getElementsByClassName('btcamp-display')[0].style.display = 'flex';
 
         // Set up ambient synth parameters (default)
         synth.setDelayFeedback(delayAmount); // User controlled delay feedback
@@ -934,7 +1124,7 @@ async function playTransaction(index) {
         function playMelodyNotes() {
             let melodyNotes = 8 + Math.floor(Math.random() * 8); // 8-16 notes
             let melodyBase = 60 + Math.floor(Math.random() * 12); // C4-B4
-            
+
             // Define scales and modes for more sophisticated harmonies
             const majorScale = [0, 2, 4, 5, 7, 9, 11];
             const minorScale = [0, 2, 3, 5, 7, 8, 10];
@@ -942,7 +1132,7 @@ async function playTransaction(index) {
             const mixolydianScale = [0, 2, 4, 5, 7, 9, 10];
             const pentatonicMajor = [0, 2, 4, 7, 9];
             const pentatonicMinor = [0, 3, 5, 7, 10];
-            
+
             // Advanced chord voicings and extensions
             const chordLibrary = {
                 majorTriad: [0, 4, 7],
@@ -963,7 +1153,7 @@ async function playTransaction(index) {
                 eleventh: [0, 4, 7, 10, 14, 17],
                 thirteenth: [0, 4, 7, 10, 14, 17, 21]
             };
-            
+
             // Chord progression patterns based on mood
             const progressionLibrary = {
                 happy: [
@@ -985,38 +1175,56 @@ async function playTransaction(index) {
                     ['thirteenth', 'minor9', 'major7', 'sus2']
                 ]
             };
-            
+
             // Get root midi from key
             const rootMidi = keyToMidi[key] || 60;
-            
+
             // Select progression based on mood and complexity
             let progressionType = mood > 0.7 ? 'happy' : mood < 0.3 ? 'sad' : 'complex';
             let progression = progressionLibrary[progressionType][Math.floor(Math.random() * progressionLibrary[progressionType].length)];
             let chordIndex = 0;
+
+            // Select scale based on mood and complexity
+            let scale;
+            if (mood > 0.8) {
+                scale = Math.random() < 0.5 ? majorScale : pentatonicMajor;
+            } else if (mood < 0.2) {
+                scale = Math.random() < 0.5 ? minorScale : pentatonicMinor;
+            } else if (mood > 0.6) {
+                scale = Math.random() < 0.3 ? majorScale : dorianScale;
+            } else if (mood < 0.4) {
+                scale = Math.random() < 0.3 ? minorScale : mixolydianScale;
+            } else {
+                // Complex mood - use all scales
+                const scales = [majorScale, minorScale, dorianScale, mixolydianScale, pentatonicMajor, pentatonicMinor];
+                scale = scales[Math.floor(Math.random() * scales.length)];
+            }
+
             for (let m = 0; m < melodyNotes; m++) {
                 let melodyDelay = m * (300 + Math.floor(Math.random() * (mood > 0.5 ? 350 : 600)));
                 // Pick a scale degree
-                let scaleIdx = Math.floor(Math.random() * 7);
-                let scale = mood > 0.5 ? majorScale : minorScale;
+                let scaleIdx = Math.floor(Math.random() * scale.length);
                 let melodyNote = rootMidi + scale[scaleIdx] + 12 * Math.floor(Math.random() * 2); // 1-2 octaves
                 // Add more leaps and syncopation for happy mood
                 if (mood > 0.5 && Math.random() < 0.6) {
-                    // Jump to another major scale degree
-                    let leapIdx = (scaleIdx + (Math.random() < 0.5 ? 2 : 4)) % 7;
+                    // Jump to another scale degree
+                    let leapIdx = (scaleIdx + (Math.random() < 0.5 ? 2 : 4)) % scale.length;
                     melodyNote = rootMidi + scale[leapIdx] + 12 * Math.floor(Math.random() * 2);
                 } else if (mood <= 0.5 && Math.random() < 0.6) {
-                    // Jump to another minor scale degree
-                    let leapIdx = (scaleIdx + (Math.random() < 0.5 ? 2 : 5)) % 7;
+                    // Jump to another scale degree
+                    let leapIdx = (scaleIdx + (Math.random() < 0.5 ? 2 : 5)) % scale.length;
                     melodyNote = rootMidi + scale[leapIdx] + 12 * Math.floor(Math.random() * 2);
                 }
                 // Occasionally add a quick flourish (double or triple note)
                 if (mood > 0.5 && Math.random() < 0.25) {
                     for (let f = 0; f < 2 + Math.floor(Math.random() * 2); f++) {
                         setTimeout(() => {
-                            let flourishIdx = (scaleIdx + (Math.random() < 0.5 ? 1 : -1)) % 7;
-                            let flourishNote = rootMidi + scale[(flourishIdx + 7) % 7] + 12 * Math.floor(Math.random() * 2);
-                            let melAmp = 1.3 * (0.7 + Math.random() * 0.6);
-                            synth.playNote(flourishNote, melAmp, 0.8, 0);
+                            let flourishIdx = (scaleIdx + (Math.random() < 0.5 ? 1 : -1)) % scale.length;
+                            let flourishNote = rootMidi + scale[(flourishIdx + scale.length) % scale.length] + 12 * Math.floor(Math.random() * 2);
+                            let melAmp = 1.3 * (0.7 + Math.random() * 0.6) * synthVolume;
+                            if (synthVolume > 0) {
+                                synth.playNote(flourishNote, melAmp, 0.8, 0);
+                            }
                         }, melodyDelay + 30 * f);
                     }
                 }
@@ -1034,17 +1242,19 @@ async function playTransaction(index) {
                     synth.setDelayTimeTempo(90 + delayAmount * 100, 0.25 + delayAmount * 0.25);
                     synth.setAmpAttackTime(0.05);
                     synth.setAmpReleaseTime(0.2);
-                    let melAmp = 0.8 * (0.7 + Math.random() * 0.6); // Lowered amplitude for melody
-                    synth.playNote(melodyNote, melAmp, 0.8, 0);
+                    let melAmp = 0.8 * (0.7 + Math.random() * 0.6) * synthVolume; // Lowered amplitude for melody
+                    if (synthVolume > 0) {
+                        synth.playNote(melodyNote, melAmp, 0.8, 0);
+                    }
                     // --- Advanced Multi-Voice Harmonization ---
                     const currentChordName = progression[chordIndex % progression.length];
                     const currentChord = chordLibrary[currentChordName];
                     chordIndex = (chordIndex + (Math.random() < 0.3 ? 1 : 0)) % progression.length; // Sometimes advance chord
-                    
+
                     // Voice leading and harmonic movement
                     const harmonies = [];
                     const voiceCount = Math.min(currentChord.length, 3 + Math.floor(Math.random() * 2)); // 3-4 voices
-                    
+
                     // Add chord tones with voice leading
                     for (let v = 0; v < voiceCount; v++) {
                         if (Math.random() < (0.4 + harmonyIntensity * 0.5)) { // Controlled by harmony slider
@@ -1059,7 +1269,7 @@ async function playTransaction(index) {
                             });
                         }
                     }
-                    
+
                     // Add passing tones and non-chord tones for complexity
                     if (Math.random() < (0.2 + harmonyIntensity * 0.3)) { // Controlled by harmony slider
                         const passingTone = currentChord[0] + (Math.random() < 0.5 ? 1 : -1); // Semitone approach
@@ -1071,43 +1281,47 @@ async function playTransaction(index) {
                             amplitude: 0.2 // Quieter
                         });
                     }
-                    
+
                     // Play harmonized voices with advanced effects
                     harmonies.forEach((harmony, i) => {
                         setTimeout(() => {
                             let harmonyNote = melodyNote + harmony.interval;
-                            let harmonyAmp = (harmony.amplitude || (melAmp * (0.25 + Math.random() * 0.15))); // Varied amplitude
-                            
+                            let harmonyAmp = (harmony.amplitude || (melAmp * (0.25 + Math.random() * 0.15))) * synthVolume; // Varied amplitude
+
                             // Save synth state
                             let prevWave = synth.wave;
                             let prevFilterCutoff = synth._filter.frequency.value;
-                            
+
                             // Set voice-specific parameters
                             synth.setOscWave(harmony.waveform); // Different waveforms per voice
-                            
+
                             // Voice-specific filtering for separation
                             if (harmony.voice < 2) {
                                 synth.setFilterCutoff(0.6 + harmony.voice * 0.1); // Higher voices brighter
                             } else {
                                 synth.setFilterCutoff(0.4 - (harmony.voice - 2) * 0.05); // Lower voices darker
                             }
-                            
-                            synth.playNote(harmonyNote, harmonyAmp, 0.8, 0);
-                            
+
+                            if (synthVolume > 0) {
+                                synth.playNote(harmonyNote, harmonyAmp, 0.8, 0);
+                            }
+
                             // Restore synth state
                             synth.setOscWave(prevWave === 'sine' ? 0 : prevWave === 'square' ? 1 : prevWave === 'sawtooth' ? 2 : 3);
                             synth.setFilterCutoff(prevFilterCutoff);
-                            
+
                         }, harmony.delay);
                     });
-                    
+
                     // Add harmonic resonance effect (sympathetic harmonics)
                     if (Math.random() < (harmonyIntensity * 0.4)) { // Controlled by harmony slider
                         setTimeout(() => {
                             const resonantFreqs = [melodyNote + 19, melodyNote + 24, melodyNote + 28]; // Natural harmonics
                             resonantFreqs.forEach((freq, idx) => {
                                 setTimeout(() => {
-                                    synth.playNote(freq, melAmp * 0.1 * (1 - idx * 0.3), 0.9, 0);
+                                    if (synthVolume > 0) {
+                                        synth.playNote(freq, melAmp * 0.1 * (1 - idx * 0.3) * synthVolume, 0.9, 0);
+                                    }
                                 }, idx * 10);
                             });
                         }, 80);
@@ -1122,82 +1336,88 @@ async function playTransaction(index) {
                 }, melodyDelay));
             }
         }
-        
+
         // --- Bass Harmonization Layer ---
         function playBassHarmonies() {
             const bassNotes = 6 + Math.floor(Math.random() * 4); // 6-10 bass notes
             const bassProgression = progression.slice(); // Copy melody progression
             let bassChordIndex = 0;
-            
+
             for (let b = 0; b < bassNotes; b++) {
                 let bassDelay = b * (600 + Math.floor(Math.random() * 400)); // Slower than melody
-                
+
                 timeout.push(setTimeout(() => {
                     const currentBassChord = chordLibrary[bassProgression[bassChordIndex % bassProgression.length]];
                     bassChordIndex++;
-                    
+
                     // Play root and fifth in bass register
                     const bassRoot = rootMidi - 12 + currentBassChord[0]; // One octave lower
                     const bassFifth = bassRoot + (currentBassChord[2] || 7); // Fifth if available
-                    
+
                     // Save/restore synth config for bass
                     let prevWave = synth.wave;
                     let prevAttack = synth._ampAttackTime;
                     let prevRelease = synth._ampReleaseTime;
-                    
+
                     // Set bass parameters
                     synth.setOscWave(2); // Sawtooth for bass
                     synth.setAmpAttackTime(0.1);
                     synth.setAmpReleaseTime(0.6);
                     synth.setFilterCutoff(0.25); // Dark bass tone
-                    
+
                     // Play bass root
-                    synth.playNote(bassRoot, 0.4 + Math.random() * 0.2, 0.7, 0);
-                    
+                    if (synthVolume > 0) {
+                        synth.playNote(bassRoot, (0.4 + Math.random() * 0.2) * synthVolume, 0.7, 0);
+                    }
+
                     // Play bass fifth with slight delay
                     setTimeout(() => {
-                        synth.playNote(bassFifth, 0.25 + Math.random() * 0.15, 0.7, 0);
+                        if (synthVolume > 0) {
+                            synth.playNote(bassFifth, (0.25 + Math.random() * 0.15) * synthVolume, 0.7, 0);
+                        }
                     }, 100 + Math.random() * 50);
-                    
+
                     // Restore config
                     synth.setOscWave(prevWave === 'sine' ? 0 : prevWave === 'square' ? 1 : prevWave === 'sawtooth' ? 2 : 3);
                     synth.setAmpAttackTime(prevAttack / 5);
                     synth.setAmpReleaseTime(prevRelease / 5);
-                    
+
                 }, bassDelay));
             }
         }
-        
+
         // --- Atmospheric Pad Layer ---
         function playAtmosphericPad() {
             if (Math.random() < (harmonyIntensity * 0.8)) { // Controlled by harmony slider
                 const padDelay = 200 + Math.random() * 300;
-                
+
                 timeout.push(setTimeout(() => {
                     const padChord = chordLibrary[progression[0]]; // Use first chord of progression
                     const padRoot = rootMidi + 12; // Higher register
-                    
+
                     // Save synth state
                     let prevWave = synth.wave;
                     let prevAttack = synth._ampAttackTime;
                     let prevRelease = synth._ampReleaseTime;
                     let prevFilterCutoff = synth._filter.frequency.value;
-                    
+
                     // Set pad parameters
                     synth.setOscWave(0); // Sine for smooth pad
                     synth.setAmpAttackTime(0.8); // Slow attack
                     synth.setAmpReleaseTime(2.0); // Long release
                     synth.setFilterCutoff(0.35); // Soft filtering
-                    
+
                     // Play pad chord tones with staggered timing
                     padChord.slice(0, 4).forEach((interval, idx) => { // Max 4 voices
                         setTimeout(() => {
                             const padNote = padRoot + interval;
-                            const padAmp = 0.15 * (1 - idx * 0.1); // Decreasing amplitude
-                            synth.playNote(padNote, padAmp, 0.9, 0);
+                            const padAmp = 0.15 * (1 - idx * 0.1) * synthVolume; // Decreasing amplitude
+                            if (synthVolume > 0) {
+                                synth.playNote(padNote, padAmp, 0.9, 0);
+                            }
                         }, idx * 200);
                     });
-                    
+
                     // Restore config after pad
                     setTimeout(() => {
                         synth.setOscWave(prevWave === 'sine' ? 0 : prevWave === 'square' ? 1 : prevWave === 'sawtooth' ? 2 : 3);
@@ -1205,17 +1425,25 @@ async function playTransaction(index) {
                         synth.setAmpReleaseTime(prevRelease / 5);
                         synth.setFilterCutoff(prevFilterCutoff);
                     }, 1000);
-                    
+
                 }, padDelay));
             }
         }
-        
+
         // --- End Melody Instrument ---
 
         // Progress bar setup
         const totalNotes = Math.floor(toplay.length / 2);
         showProgressBar();
         setProgressBar(0);
+
+        // Auto-update drum pattern to follow new transaction
+        if (drumPad && drumPad.isLooping) {
+            console.log('🔗 Auto-updating drum pattern to follow new transaction');
+            setTimeout(() => {
+                drumPad.applyTransactionFills();
+            }, 200); // Small delay to ensure transaction display is updated
+        }
 
         // Recursive function to play each note in sequence (ambient background)
         function playNoteAt(i) {
@@ -1270,7 +1498,7 @@ async function playTransaction(index) {
                 dynamicAmp *= 0.9 + Math.random() * 0.3; // 0.9x to 1.2x
             }
             playSound(midiNote, byteHex, 0, dynamicAmp, filterOffset);
-            
+
             // --- Enhanced Ambient Harmonization ---
             if (Math.random() < (harmonyIntensity * 0.5)) { // Controlled by harmony slider
                 const ambientIntervals = mood > 0.5 ? [4, 7, 12] : [3, 7, 10]; // Major/minor harmonies
@@ -1278,23 +1506,23 @@ async function playTransaction(index) {
                     if (Math.random() < 0.6) { // Probabilistic harmonies
                         setTimeout(() => {
                             const harmonyNote = midiNote + interval;
-                            const harmonyAmp = dynamicAmp * (0.3 - idx * 0.08); // Decreasing volume
+                            const harmonyAmp = dynamicAmp * (0.3 - idx * 0.08) * synthVolume; // Decreasing volume
                             playSound(harmonyNote, byteHex, 0, harmonyAmp, filterOffset + 0.1);
                         }, (idx + 1) * (20 + Math.random() * 15));
                     }
                 });
             }
-            
+
             // --- Extra dynamic: quick grace note (octave up or down) ---
             if (mood > 0.5 && Math.random() < 0.35) { // more grace notes
                 var graceNote = midiNote + (Math.random() < 0.5 ? 12 : -12);
                 if (graceNote >= 48 && graceNote <= 84) {
                     setTimeout(() => {
-                        playSound(graceNote, byteHex, 0, dynamicAmp * 1.1, filterOffset);
+                        playSound(graceNote, byteHex, 0, dynamicAmp * 1.1 * synthVolume, filterOffset);
                     }, 40 + Math.random() * 80); // quicker after main note
                 }
             }
-            
+
             // --- Harmonic Resonance for Ambient Layer ---
             if (Math.random() < (harmonyIntensity * 0.25)) { // Controlled by harmony slider
                 setTimeout(() => {
@@ -1302,7 +1530,7 @@ async function playTransaction(index) {
                     const harmonicFreqs = [midiNote + 12, midiNote + 19, midiNote + 24];
                     harmonicFreqs.forEach((freq, idx) => {
                         setTimeout(() => {
-                            playSound(freq, byteHex, 0, dynamicAmp * 0.15 * (1 - idx * 0.3), filterOffset + 0.2);
+                            playSound(freq, byteHex, 0, dynamicAmp * 0.15 * (1 - idx * 0.3) * synthVolume, filterOffset + 0.2);
                         }, idx * 15);
                     });
                 }, 60 + Math.random() * 40);
@@ -1326,16 +1554,9 @@ async function playTransaction(index) {
         playMelodyNotes();
         playBassHarmonies();
         playAtmosphericPad();
-        
-        // --- Add Transaction Drum Beat ---
-        if (drumPad && Math.random() < 0.7) { // 70% chance to auto-play transaction beat
-            console.log('🔗 Auto-starting transaction-based drum pattern');
-            // Small delay to let transaction display update
-            setTimeout(() => {
-                drumPad.startTransactionLoop(toplay);
-            }, 100);
-        }
-        
+
+
+
         updateNextButtonVisibility();
     } else {
         document.getElementById("txplaying").innerHTML = '';
@@ -1403,12 +1624,7 @@ document.getElementById('next').onclick = function () {
     playNext()
 }
 
-document.getElementById('test-drums').onclick = function () {
-    if (context.state === 'suspended') {
-        context.resume();
-    }
-    testDrums();
-}
+
 
 document.body.onkeyup = function (e) {
     if (e.keyCode == 32) {

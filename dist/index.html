@@ -54,7 +54,7 @@
         min-height: 100vh;
         min-width: 100vw;
         width: 100vw;
-        height: 100vh;
+        height: auto;
         display: flex;
         align-items: stretch;
         justify-content: stretch;
@@ -63,19 +63,19 @@
       }
       .btcamp-player {
         width: 100vw;
-        height: 100vh;
+        height: auto;
+        min-height: 100vh;
         background: #181c20;
         border: none;
         border-radius: 0;
         box-shadow: none;
         display: flex;
         flex-direction: column;
-        overflow: hidden;
+        overflow: visible;
         font-family: "Roboto Mono", monospace;
         position: relative;
         justify-content: flex-start;
         padding: 10px 24px 10px 24px;
-        max-height: 100vh;
         box-sizing: border-box;
       }
       .btcamp-header {
@@ -439,231 +439,579 @@
           font-size: 0.9rem !important;
         }
       }
+
+      /* Fixed Transaction Display */
+      .fixed-transaction-display {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        background: #181c20;
+        border-bottom: 2px solid #222;
+        padding: 1rem 2rem;
+        z-index: 100;
+        max-height: 200px;
+        overflow-y: auto;
+      }
+
+      /* Transaction Display Elements */
+      #txplaying {
+        color: #00ffea;
+        font-size: 0.9rem;
+        margin-bottom: 0.5rem;
+        text-align: center;
+      }
+
+      #txplaying a {
+        color: #00c3ff;
+        text-decoration: underline;
+      }
+
+      #txplaying a:hover {
+        color: #00ffea;
+      }
+
+      /* Main Content Area */
+      .main-content {
+        margin-top: 200px;
+        margin-bottom: 120px;
+        min-height: calc(100vh - 320px);
+      }
+
+      /* Tab Content */
+      .tab-content {
+        display: none;
+        padding: 2rem;
+      }
+
+      .tab-content.active {
+        display: block;
+      }
+
+      /* Bottom Tab Bar */
+      .bottom-tab-bar {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: #181c20;
+        border-top: 2px solid #222;
+        display: flex;
+        flex-direction: column;
+        height: 120px;
+        z-index: 100;
+      }
+
+      /* Volume Controls */
+      .volume-controls {
+        display: flex;
+        justify-content: space-around;
+        align-items: center;
+        padding: 0.5rem 2rem;
+        border-bottom: 1px solid #333;
+        height: 60px;
+      }
+
+      .volume-control {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.3rem;
+        flex: 1;
+      }
+
+      .volume-slider {
+        width: 100px;
+        height: 4px;
+        background: #333;
+        border-radius: 2px;
+        outline: none;
+        appearance: none;
+      }
+
+      .volume-slider::-webkit-slider-thumb {
+        appearance: none;
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        background: #00c3ff;
+        cursor: pointer;
+      }
+
+      .volume-slider::-moz-range-thumb {
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        background: #00c3ff;
+        cursor: pointer;
+        border: none;
+      }
+
+      /* Tab Buttons */
+      .tab-buttons {
+        display: flex;
+        height: 60px;
+      }
+
+      .tab-btn {
+        flex: 1;
+        background: #222;
+        border: none;
+        color: #fff;
+        font-size: 1.2rem;
+        font-weight: bold;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        border-radius: 0;
+      }
+
+      .tab-btn:hover {
+        background: #333;
+      }
+
+      .tab-btn.active {
+        background: #ff6600;
+        color: #000;
+      }
+
+      /* Drum Pattern Composer */
+      .drum-composer {
+        margin: 2rem 0;
+        padding: 1rem;
+        background: #222;
+        border-radius: 12px;
+        border: 2px solid #333;
+      }
+
+      .composer-header {
+        text-align: center;
+        margin-bottom: 1rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 1px solid #444;
+      }
+
+      .composer-grid {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+      }
+
+      .drum-row {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        padding: 0.5rem;
+        background: #1a1a1a;
+        border-radius: 8px;
+      }
+
+      .drum-label {
+        width: 80px;
+        font-size: 0.9rem;
+        font-weight: bold;
+        text-align: center;
+        color: #fff;
+      }
+
+      .beat-grid {
+        display: grid;
+        grid-template-columns: repeat(16, 1fr);
+        gap: 2px;
+        flex: 1;
+      }
+
+      .beat-button {
+        width: 30px;
+        height: 30px;
+        border: 2px solid #444;
+        border-radius: 4px;
+        background: #333;
+        cursor: pointer;
+        transition: all 0.1s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.7rem;
+        color: #666;
+      }
+
+      .beat-button:hover {
+        border-color: #666;
+        background: #444;
+      }
+
+      .beat-button.active {
+        background: #ff6600;
+        border-color: #ff8800;
+        color: #000;
+        font-weight: bold;
+      }
+
+      .beat-button.active.kick {
+        background: #ff4444;
+        border-color: #ff6666;
+      }
+
+      .beat-button.active.snare {
+        background: #44ff44;
+        border-color: #66ff66;
+      }
+
+      .beat-button.active.hihat {
+        background: #4444ff;
+        border-color: #6666ff;
+      }
+
+      .beat-button.active.cymbal {
+        background: #ffff44;
+        border-color: #ffff66;
+        color: #000;
+      }
+
+      .composer-controls {
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+        padding-top: 1rem;
+        border-top: 1px solid #444;
+      }
+
+      /* Drum Pad Grid (keeping for backward compatibility) */
+      .drum-pad-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+        margin: 2rem 0;
+        width: 100%;
+      }
+
+      .drum-pad {
+        background: #ff4444;
+        color: white;
+        border: none;
+        padding: 2rem;
+        border-radius: 12px;
+        font-size: 1.3rem;
+        font-weight: bold;
+        cursor: pointer;
+        transition: all 0.1s;
+        min-height: 120px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .drum-pad:hover {
+        transform: scale(1.05);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      }
+
+      .drum-pad:active {
+        transform: scale(0.95);
+      }
+
+      #snare-pad {
+        background: #44ff44;
+        color: black;
+      }
+
+      #hihat-pad {
+        background: #4444ff;
+        color: white;
+      }
+
+      #cymbal-pad {
+        background: #ffaa00;
+        color: black;
+      }
+
+      /* Drum Controls */
+      .drum-controls {
+        text-align: center;
+        margin-top: 2rem;
+      }
+
+      .bpm-control {
+        margin-top: 1rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 1rem;
+      }
+
+      .bpm-control input[type="range"] {
+        width: 150px;
+      }
+
+      /* Synth Controls Row */
+      .synth-controls-row {
+        display: flex;
+        flex-direction: row;
+        align-items: flex-end;
+        justify-content: center;
+        gap: 2.5em;
+        margin: 2rem 0;
+        flex-wrap: wrap;
+      }
+
+      /* Button Row */
+      .btcamp-btn-row {
+        display: flex;
+        flex-direction: row;
+        gap: 2rem;
+        justify-content: center;
+        width: 100%;
+        margin: 2rem 0;
+      }
+
+      /* Responsive adjustments */
+      @media (max-width: 768px) {
+        .fixed-transaction-display {
+          padding: 0.5rem 1rem;
+          max-height: 150px;
+        }
+
+        .main-content {
+          margin-top: 150px;
+        }
+
+        .drum-pad {
+          padding: 1.5rem;
+          font-size: 1.1rem;
+          min-height: 100px;
+        }
+
+        .synth-controls-row {
+          gap: 1.5em;
+        }
+
+        .tab-btn {
+          font-size: 1rem;
+        }
+      }
     </style>
   </head>
   <body>
     <div class="btcamp-player">
-      <div class="btcamp-header">
-        <img src="bitcoin-pixelated.png" alt="Bitcoin Logo" />
-        Bitcoin Synth + Drums 🥁
-      </div>
-      <div
-        class="btcamp-display"
-        style="margin-top: 2.5em; margin-bottom: 2.5em"
-      >
+      <!-- Fixed Transaction Display -->
+      <div class="fixed-transaction-display">
+        <div class="btcamp-header">
+          <img src="bitcoin-pixelated.png" alt="Bitcoin Logo" />
+          Bitcoin Crazy Synth
+        </div>
         <div id="txplaying"></div>
         <div id="progress-bar">
           <div id="progress-bar-fill"></div>
         </div>
+        <div class="btcamp-raw" id="rawtx">
+          Still need to be fetched, press play..
+        </div>
+        <div class="btcamp-nowplaying" id="nowplaying"></div>
       </div>
-      <div
-        class="btcamp-btn-row"
-        style="
-          display: flex;
-          flex-direction: row;
-          gap: 2rem;
-          justify-content: center;
-          width: 100%;
-          margin-bottom: 2em;
-        "
-      >
-        <button id="playpause-indicator" class="btcamp-btn">▶️ Play</button>
-        <button id="next" class="btcamp-btn">⏭️ Next</button>
-        <button id="test-drums" class="btcamp-btn">🥁 Test</button>
-      </div>
-      <div
-        class="synth-controls-row"
-        style="
-          display: flex;
-          flex-direction: row;
-          align-items: flex-end;
-          justify-content: center;
-          gap: 2.5em;
-          margin-bottom: 2.5em;
-        "
-      >
-        <div class="synth-control">
-          <input
-            type="range"
-            id="tempo-slider"
-            min="0.5"
-            max="2"
-            step="0.01"
-            value="1"
-            class="synth-knob vertical-knob"
-          />
-          <div class="synth-label">
-            <span style="color: #00ffea">Tempo</span><br /><span
-              id="tempo-value"
-              style="color: #00ffea"
-              >1.00x</span
-            >
+
+      <!-- Main Content Area -->
+      <div class="main-content">
+        <!-- Synth Tab -->
+        <div id="synth-tab" class="tab-content active">
+          
+          <div class="btcamp-btn-row">
+            <button id="playpause-indicator" class="btcamp-btn">▶️ Play</button>
+            <button id="next" class="btcamp-btn">⏭️ Next</button>
+          </div>
+          
+          <div class="synth-controls-row">
+            <div class="synth-control">
+              <input
+                type="range"
+                id="tempo-slider"
+                min="0.5"
+                max="2"
+                step="0.01"
+                value="1"
+                class="synth-knob vertical-knob"
+              />
+              <div class="synth-label">
+                <span style="color: #00ffea">Tempo</span><br /><span
+                  id="tempo-value"
+                  style="color: #00ffea"
+                  >1.00x</span
+                >
+              </div>
+            </div>
+            <div class="synth-control">
+              <input
+                type="range"
+                id="mood-slider"
+                min="0"
+                max="1"
+                step="0.01"
+                value="0"
+                class="synth-knob vertical-knob"
+              />
+              <div class="synth-label">
+                <span style="color: #ffb347">Mood</span><br /><span
+                  id="mood-value"
+                  style="color: #ffb347"
+                  >Sad</span
+                >
+              </div>
+            </div>
+            <div class="synth-control">
+              <input
+                type="range"
+                id="key-slider"
+                min="0"
+                max="6"
+                step="1"
+                value="0"
+                class="synth-knob vertical-knob"
+              />
+              <div class="synth-label">
+                <span style="color: #b3ff00">Key</span><br /><span
+                  id="key-value"
+                  style="color: #b3ff00"
+                  >C</span
+                >
+              </div>
+            </div>
+            <div class="synth-control">
+              <input
+                type="range"
+                id="delay-slider"
+                min="0.1"
+                max="1.0"
+                step="0.01"
+                value="0.25"
+                class="synth-knob vertical-knob"
+              />
+              <div class="synth-label">
+                <span style="color: #ff00ff">Delay</span><br /><span
+                  id="delay-value"
+                  style="color: #ff00ff"
+                  >0.25</span
+                >
+              </div>
+            </div>
+            <div class="synth-control">
+              <input
+                type="range"
+                id="harmony-slider"
+                min="0"
+                max="1.0"
+                step="0.01"
+                value="0.8"
+                class="synth-knob vertical-knob"
+              />
+              <div class="synth-label">
+                <span style="color: #00ff80">Harmony</span><br /><span
+                  id="harmony-value"
+                  style="color: #00ff80"
+                  >0.80</span
+                >
+              </div>
+            </div>
+
+          </div>
+          
+
+          <div id="start-message" class="btcamp-info" style="text-align: center; color: #00ffea;">
+            Press Play to start listening to the blockchain!
           </div>
         </div>
-        <div class="synth-control">
-          <input
-            type="range"
-            id="mood-slider"
-            min="0"
-            max="1"
-            step="0.01"
-            value="0"
-            class="synth-knob vertical-knob"
-          />
-          <div class="synth-label">
-            <span style="color: #ffb347">Mood</span><br /><span
-              id="mood-value"
-              style="color: #ffb347"
-              >Sad</span
-            >
+
+        <!-- Drums Tab -->
+        <div id="drums-tab" class="tab-content">
+          
+          <!-- Drum Pattern Composer -->
+          <div class="drum-composer">
+            <div class="composer-header">
+              <span style="color: #ffaa00; font-size: 1rem; font-weight: bold;">Drum Pattern Composer</span>
+            </div>
+            <div class="composer-grid">
+              <!-- Kick Row -->
+              <div class="drum-row">
+                <div class="drum-label">🔴 KICK</div>
+                <div class="beat-grid" id="kick-grid">
+                  <!-- 16 beat buttons will be generated by JS -->
+                </div>
+              </div>
+              <!-- Snare Row -->
+              <div class="drum-row">
+                <div class="drum-label">🟢 SNARE</div>
+                <div class="beat-grid" id="snare-grid">
+                  <!-- 16 beat buttons will be generated by JS -->
+                </div>
+              </div>
+              <!-- Hi-hat Row -->
+              <div class="drum-row">
+                <div class="drum-label">🔵 HI-HAT</div>
+                <div class="beat-grid" id="hihat-grid">
+                  <!-- 16 beat buttons will be generated by JS -->
+                </div>
+              </div>
+              <!-- Cymbal Row -->
+              <div class="drum-row">
+                <div class="drum-label">🟡 CYMBAL</div>
+                <div class="beat-grid" id="cymbal-grid">
+                  <!-- 16 beat buttons will be generated by JS -->
+                </div>
+              </div>
+            </div>
+            <div class="composer-controls">
+              <button id="clear-pattern" class="btcamp-btn">🗑️ Clear</button>
+              <button id="random-pattern" class="btcamp-btn">🎲 Random</button>
+              <button id="tx-fill-pattern" class="btcamp-btn">🔗 TX Fill</button>
+            </div>
           </div>
-        </div>
-        <div class="synth-control">
-          <input
-            type="range"
-            id="key-slider"
-            min="0"
-            max="6"
-            step="1"
-            value="0"
-            class="synth-knob vertical-knob"
-          />
-          <div class="synth-label">
-            <span style="color: #b3ff00">Key</span><br /><span
-              id="key-value"
-              style="color: #b3ff00"
-              >C</span
-            >
-          </div>
-        </div>
-        <div class="synth-control">
-          <input
-            type="range"
-            id="delay-slider"
-            min="0.1"
-            max="1.0"
-            step="0.01"
-            value="0.7"
-            class="synth-knob vertical-knob"
-          />
-          <div class="synth-label">
-            <span style="color: #ff00ff">Delay</span><br /><span
-              id="delay-value"
-              style="color: #ff00ff"
-              >0.70</span
-            >
-          </div>
-        </div>
-        <div class="synth-control">
-          <input
-            type="range"
-            id="harmony-slider"
-            min="0"
-            max="1.0"
-            step="0.01"
-            value="0.8"
-            class="synth-knob vertical-knob"
-          />
-          <div class="synth-label">
-            <span style="color: #00ff80">Harmony</span><br /><span
-              id="harmony-value"
-              style="color: #00ff80"
-              >0.80</span
-            >
+          
+          <!-- Loop Controls -->
+          <div class="drum-controls">
+            <button id="drum-loop-toggle" class="btcamp-btn">🔄 Start Loop</button>
+            <div class="bpm-control">
+              <span style="color: #ffaa00; font-size: 0.9rem;">BPM: </span>
+              <input type="range" id="drum-bpm" min="30" max="180" value="120">
+              <span id="bpm-value" style="color: #ffaa00;">120</span>
+            </div>
           </div>
         </div>
       </div>
-      <div
-        class="synth-controls-row"
-        style="
-          display: flex;
-          flex-direction: row;
-          align-items: flex-end;
-          justify-content: center;
-          gap: 2.5em;
-          margin-bottom: 1.5em;
-          margin-top: 0.5em;
-        "
-      >
-        <div class="synth-control">
-          <input
-            type="range"
-            id="drum-volume-slider"
-            min="0"
-            max="1.0"
-            step="0.01"
-            value="0.6"
-            class="synth-knob vertical-knob"
-          />
-          <div class="synth-label">
-            <span style="color: #ff8000">Drums</span><br /><span
-              id="drum-volume-value"
-              style="color: #ff8000"
-              >0.60</span
-            >
+
+      <!-- Fixed Bottom Tab Bar -->
+      <div class="bottom-tab-bar">
+        <!-- Volume Controls -->
+        <div class="volume-controls">
+          <div class="volume-control">
+            <span style="color: #00c3ff; font-size: 0.8rem;">Synth</span>
+            <input
+              type="range"
+              id="synth-volume-slider"
+              min="0"
+              max="1.0"
+              step="0.01"
+              value="0.8"
+              class="volume-slider"
+            />
+            <span id="synth-volume-value" style="color: #00c3ff; font-size: 0.8rem;">0.80</span>
+          </div>
+          <div class="volume-control">
+            <span style="color: #ff8000; font-size: 0.8rem;">Drums</span>
+            <input
+              type="range"
+              id="drum-volume-slider"
+              min="0"
+              max="1.0"
+              step="0.01"
+              value="0.6"
+              class="volume-slider"
+            />
+            <span id="drum-volume-value" style="color: #ff8000; font-size: 0.8rem;">0.60</span>
           </div>
         </div>
-        <div class="synth-control">
-          <input
-            type="range"
-            id="drum-complexity-slider"
-            min="0"
-            max="1.0"
-            step="0.01"
-            value="0.5"
-            class="synth-knob vertical-knob"
-          />
-          <div class="synth-label">
-            <span style="color: #ff4080">Beats</span><br /><span
-              id="drum-complexity-value"
-              style="color: #ff4080"
-              >0.50</span
-            >
-          </div>
-        </div>
-      </div>
-      <div class="btcamp-info">
-        <span id="info-label">Playing transaction:</span>
-        <span id="info-value"></span>
-      </div>
-      <div id="start-message" class="btcamp-info" style="text-align: center; color: #00ffea;">
-        Press Play to start listening to the blockchain!
-      </div>
-      <div class="btcamp-raw" id="rawtx">
-        Still need to be fetched, press play..
-      </div>
-      <div class="btcamp-nowplaying" id="nowplaying"></div>
-      
-      <!-- Drum Pad Section -->
-      <div class="btcamp-drums" style="background: #181c20; border-bottom: 2px solid #222; padding: 1rem 2rem;">
-        <div style="text-align: center; margin-bottom: 1rem;">
-          <h3 style="color: #ff8000; margin: 0; font-size: 1.2rem;">🥁 DRUM PAD 🥁</h3>
-        </div>
-        
-        <!-- Drum Buttons Grid -->
-        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; margin-bottom: 1rem; max-width: 400px; margin-left: auto; margin-right: auto;">
-          <button id="kick-pad" class="drum-pad" style="background: #ff4444; color: white; border: none; padding: 1rem; border-radius: 8px; font-size: 1.1rem; font-weight: bold; cursor: pointer; transition: all 0.1s;">
-            🔴 KICK
-          </button>
-          <button id="snare-pad" class="drum-pad" style="background: #44ff44; color: black; border: none; padding: 1rem; border-radius: 8px; font-size: 1.1rem; font-weight: bold; cursor: pointer; transition: all 0.1s;">
-            🟢 SNARE
-          </button>
-          <button id="hihat-pad" class="drum-pad" style="background: #4444ff; color: white; border: none; padding: 1rem; border-radius: 8px; font-size: 1.1rem; font-weight: bold; cursor: pointer; transition: all 0.1s;">
-            🔵 HI-HAT
-          </button>
-          <button id="cymbal-pad" class="drum-pad" style="background: #ffaa00; color: black; border: none; padding: 1rem; border-radius: 8px; font-size: 1.1rem; font-weight: bold; cursor: pointer; transition: all 0.1s;">
-            🟡 CYMBAL
-          </button>
-        </div>
-        
-        <!-- Loop Controls -->
-        <div style="text-align: center; margin-top: 1rem;">
-          <button id="drum-loop-toggle" class="btcamp-btn" style="margin-right: 0.5rem;">🔄 Start Loop</button>
-          <button id="transaction-drum-button" class="btcamp-btn" style="margin-right: 1rem; background: #ff6600; border-color: #ff6600;">🔗 TX Beat</button>
-          <br style="margin-bottom: 0.5rem;">
-          <span style="color: #ffaa00; font-size: 0.9rem;">BPM: </span>
-          <input type="range" id="drum-bpm" min="60" max="180" value="120" style="width: 100px; margin-left: 0.5rem;">
-          <span id="bpm-value" style="color: #ffaa00; margin-left: 0.5rem;">120</span>
+        <!-- Tab Buttons -->
+        <div class="tab-buttons">
+          <button id="synth-tab-btn" class="tab-btn active">🎹 Synth</button>
+          <button id="drums-tab-btn" class="tab-btn">🥁 Drums</button>
         </div>
       </div>
       
@@ -701,6 +1049,39 @@
     <script>
       document.addEventListener("contextmenu", function (e) {
         e.preventDefault();
+      });
+
+      // Tab switching functionality
+      document.addEventListener('DOMContentLoaded', function() {
+        const synthTabBtn = document.getElementById('synth-tab-btn');
+        const drumsTabBtn = document.getElementById('drums-tab-btn');
+        const synthTab = document.getElementById('synth-tab');
+        const drumsTab = document.getElementById('drums-tab');
+
+        function switchTab(tabName) {
+          // Hide all tabs
+          document.querySelectorAll('.tab-content').forEach(tab => {
+            tab.classList.remove('active');
+          });
+          
+          // Remove active class from all buttons
+          document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.classList.remove('active');
+          });
+          
+          // Show selected tab
+          if (tabName === 'synth') {
+            synthTab.classList.add('active');
+            synthTabBtn.classList.add('active');
+          } else if (tabName === 'drums') {
+            drumsTab.classList.add('active');
+            drumsTabBtn.classList.add('active');
+          }
+        }
+
+        // Add click event listeners
+        synthTabBtn.addEventListener('click', () => switchTab('synth'));
+        drumsTabBtn.addEventListener('click', () => switchTab('drums'));
       });
     </script>
   </body>
